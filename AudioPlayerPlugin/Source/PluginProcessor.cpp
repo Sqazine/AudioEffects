@@ -1,15 +1,7 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
+
 AudioPlayerPluginAudioProcessor::AudioPlayerPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      :state(Stopped), AudioProcessor (BusesProperties()
@@ -31,7 +23,7 @@ AudioPlayerPluginAudioProcessor::~AudioPlayerPluginAudioProcessor()
     transportSource.setSource(nullptr);
 }
 
-//==============================================================================
+
 const juce::String AudioPlayerPluginAudioProcessor::getName() const
 {
     return JucePlugin_Name;
@@ -93,7 +85,7 @@ void AudioPlayerPluginAudioProcessor::changeProgramName (int index, const juce::
 {
 }
 
-//==============================================================================
+
 void AudioPlayerPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     transportSource.prepareToPlay(samplesPerBlock, sampleRate);
@@ -155,7 +147,7 @@ void AudioPlayerPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     transportSource.getNextAudioBlock(info);
 }
 
-//==============================================================================
+
 bool AudioPlayerPluginAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
@@ -166,7 +158,7 @@ juce::AudioProcessorEditor* AudioPlayerPluginAudioProcessor::createEditor()
     return new AudioPlayerPluginAudioProcessorEditor (*this);
 }
 
-//==============================================================================
+
 void AudioPlayerPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
@@ -235,7 +227,7 @@ void AudioPlayerPluginAudioProcessor::loadFile(juce::File& file)
 }
 
 
-//==============================================================================
+
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

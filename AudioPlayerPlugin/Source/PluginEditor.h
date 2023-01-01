@@ -1,38 +1,39 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
 
-class AudioPlayerPluginAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::ChangeListener
+class AudioPlayerPluginAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::ChangeListener,public juce::Timer
 {
 public:
-    AudioPlayerPluginAudioProcessorEditor (AudioPlayerPluginAudioProcessor&);
-    ~AudioPlayerPluginAudioProcessorEditor() override;
+	AudioPlayerPluginAudioProcessorEditor(AudioPlayerPluginAudioProcessor&);
+	~AudioPlayerPluginAudioProcessorEditor() override;
 
-    void paint (juce::Graphics&) override;
-    void resized() override;
+	void paint(juce::Graphics&) override;
+	void resized() override;
 
-    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-    void changeState(TransportState newState);
+	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+	void changeState(TransportState newState);
+
+	void paintIfNoFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds);
+	void paintIfFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds);
+
+	void timerCallback() override;
 private:
-    juce::TextButton openButton;
-    juce::TextButton playButton;
-    juce::TextButton stopButton;
+	juce::TextButton openButton;
+	juce::TextButton playButton;
+	juce::TextButton stopButton;
 
-    TransportState state;
+	TransportState state;
 
-    std::unique_ptr<juce::FileChooser> chooser;
+	std::unique_ptr<juce::FileChooser> chooser;
 
-    AudioPlayerPluginAudioProcessor& audioProcessor;
+	juce::AudioThumbnailCache thumbnailCache;
+	juce::AudioThumbnail thumbnail;
+	juce::AudioFormatManager formatManager;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPlayerPluginAudioProcessorEditor)
+	AudioPlayerPluginAudioProcessor& audioProcessor;
+
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPlayerPluginAudioProcessorEditor)
 };

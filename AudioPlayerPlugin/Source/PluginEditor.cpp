@@ -2,8 +2,16 @@
 #include "PluginEditor.h"
 
 AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(AudioPlayerPluginAudioProcessor& p)
-	: AudioProcessorEditor(&p), audioProcessor(p), state(p.state)
+	: AudioProcessorEditor(&p),
+	audioProcessor(p),
+	state(p.state),
+	thumbnailCache(5),
+	thumbnail(512, p.formatManager, thumbnailCache)
 {
+	startTimer(40);
+
+	thumbnail.addChangeListener(this);
+
 	audioProcessor.transportSource.addChangeListener(this);
 	setSize(300, 200);
 	addAndMakeVisible(&openButton);
@@ -13,11 +21,12 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 		auto chooseFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
 		chooser->launchAsync(chooseFlags, [this](const juce::FileChooser& fc) {
 			auto file = fc.getResult();
-			if (file != juce::File{})
-			{
-				audioProcessor.loadFile(file);
-				playButton.setEnabled(true);
-			}
+		if (file != juce::File{})
+		{
+			audioProcessor.loadFile(file);
+			playButton.setEnabled(true);
+			thumbnail.setSource(new juce::FileInputSource(file));
+		}
 			});
 	};
 
@@ -67,6 +76,13 @@ void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
 	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
 	g.setColour(juce::Colours::white);
+
+	juce::Rectangle<int> thumbnailBounds(10, 100, getWidth() - 20, getHeight() - 120);
+
+	if (thumbnail.getNumChannels() == 0)
+		paintIfNoFileLoaded(g, thumbnailBounds);
+	else
+		paintIfFileLoaded(g, thumbnailBounds);
 }
 
 void AudioPlayerPluginAudioProcessorEditor::resized()
@@ -88,6 +104,9 @@ void AudioPlayerPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeB
 		else if (Pausing == state)
 			changeState(Paused);
 	}
+
+	if (source == &thumbnail)
+		repaint();
 }
 
 void AudioPlayerPluginAudioProcessorEditor::changeState(TransportState newState)
@@ -104,6 +123,7 @@ void AudioPlayerPluginAudioProcessorEditor::changeState(TransportState newState)
 			stopButton.setEnabled(false);
 			break;
 		case Starting:
+			openButton.setEnabled(false);
 			break;
 		case Playing:
 			playButton.setButtonText("Pause");
@@ -111,8 +131,10 @@ void AudioPlayerPluginAudioProcessorEditor::changeState(TransportState newState)
 			stopButton.setEnabled(true);
 			break;
 		case Pausing:
+			openButton.setEnabled(true);
 			break;
 		case Paused:
+			openButton.setEnabled(true);
 			playButton.setButtonText("Resume");
 			stopButton.setButtonText("Return to Zero");
 			break;
@@ -122,4 +144,35 @@ void AudioPlayerPluginAudioProcessorEditor::changeState(TransportState newState)
 			break;
 		}
 	}
+}
+
+void AudioPlayerPluginAudioProcessorEditor::paintIfNoFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds)
+{
+	g.setColour(juce::Colour::fromRGB(50, 77, 107));
+	g.fillRect(thumbnailBounds);
+	g.setColour(juce::Colour::fromRGB(207, 229, 252));
+	g.drawFittedText("No File Loaded", thumbnailBounds, juce::Justification::centred, 1);
+}
+
+void AudioPlayerPluginAudioProcessorEditor::paintIfFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds)
+{
+	g.setColour(juce::Colour::fromRGB(50, 77, 107));
+	g.fillRect(thumbnailBounds);
+	g.setColour(juce::Colour::fromRGB(207, 229, 252));
+
+	auto audioLength = thumbnail.getTotalLength();
+
+	thumbnail.drawChannels(g, thumbnailBounds, 0.0, audioLength, 1.0f);
+
+	g.setColour(juce::Colours::green);
+
+	auto audioPosition = (float)audioProcessor.transportSource.getCurrentPosition();
+	auto drawPosition = (audioPosition / audioLength) * (float)thumbnailBounds.getWidth() + (float)thumbnailBounds.getX();
+
+	g.drawLine(drawPosition, (float)thumbnailBounds.getY(), drawPosition, (float)thumbnailBounds.getBottom(), 2.0f);
+}
+
+void AudioPlayerPluginAudioProcessorEditor::timerCallback()
+{
+	repaint();
 }

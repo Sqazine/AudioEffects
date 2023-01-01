@@ -5,6 +5,7 @@
 
 Builds/
 JuceLibraryCode/
+_DEBUG/
 
 # User-specific files
 *.rsuser
