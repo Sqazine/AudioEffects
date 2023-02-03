@@ -20,12 +20,12 @@ DelayAudioProcessor::DelayAudioProcessor()
 #endif
 	),
 #endif
-	mDelayParameters(*this),
-	mDelayParamDelayTime(mDelayParameters, "Delay time", "s", 0.0f, 5.0f, 0.1f),
+	mDelayParameters(*this,nullptr),
+	mDelayParamDelayTime(mDelayParameters, "Time", "s", 0.0f, 5.0f, 0.1f),
 	mDelayParamFeedback(mDelayParameters, "Feedback", "", 0.0f, 0.9f, 0.7f),
 	mDelayParamMix(mDelayParameters, "Mix", "", 0.0f, 1.0f, 1.0f)
 {
-	mDelayParameters.apvts.state = juce::ValueTree(juce::Identifier(getName().removeCharacters("- ")));
+	mDelayParameters.state = juce::ValueTree(juce::Identifier(getName()));
 }
 
 DelayAudioProcessor::~DelayAudioProcessor()
@@ -190,9 +190,12 @@ void DelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 				localWritePosition -= mDelayBufferSamples;
 		}
 
-		for (int channel = numInputChannels; channel < numOutputChannels; ++channel)
-			buffer.clear(channel, 0, numSamples);
 	}
+
+	mDelayWritePositions = localWritePosition;
+	
+	for (int channel = numInputChannels; channel < numOutputChannels; ++channel)
+		buffer.clear(channel, 0, numSamples);
 }
 
 //==============================================================================
@@ -209,7 +212,7 @@ juce::AudioProcessorEditor* DelayAudioProcessor::createEditor()
 //==============================================================================
 void DelayAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-	auto state = mDelayParameters.apvts.copyState();
+	auto state = mDelayParameters.copyState();
 	std::unique_ptr<juce::XmlElement> xml(state.createXml());
 	copyXmlToBinary(*xml, destData);
 }
@@ -219,8 +222,8 @@ void DelayAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 	std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
 	if (xmlState.get() != nullptr)
-		if (xmlState->hasTagName(mDelayParameters.apvts.state.getType()))
-			mDelayParameters.apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
+		if (xmlState->hasTagName(mDelayParameters.state.getType()))
+			mDelayParameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
 //==============================================================================

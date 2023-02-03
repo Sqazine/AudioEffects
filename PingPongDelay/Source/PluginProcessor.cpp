@@ -20,13 +20,13 @@ PingPongDelayAudioProcessor::PingPongDelayAudioProcessor()
 #endif
 	),
 #endif
-	mDelayParameters(*this),
-	mDelayParamBalance(mDelayParameters,"Balance","",0.0f,1.0f,0.25f),
-	mDelayParamDelayTime(mDelayParameters, "Delay time", "s", 0.0f, 5.0f, 0.1f),
+	mDelayParameters(*this,nullptr),
+	mDelayParamBalance(mDelayParameters, "Balance", "", -1.0f, 1.0f, 0.0f),
+	mDelayParamDelayTime(mDelayParameters, "Time", "s", 0.0f, 5.0f, 0.1f),
 	mDelayParamFeedback(mDelayParameters, "Feedback", "", 0.0f, 0.9f, 0.7f),
 	mDelayParamMix(mDelayParameters, "Mix", "", 0.0f, 1.0f, 1.0f)
 {
-	mDelayParameters.apvts.state = juce::ValueTree(juce::Identifier(getName().removeCharacters("- ")));
+	mDelayParameters.state = juce::ValueTree(juce::Identifier(getName()));
 }
 
 PingPongDelayAudioProcessor::~PingPongDelayAudioProcessor()
@@ -154,7 +154,7 @@ void PingPongDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 	auto totalNumOutputChannels = getTotalNumOutputChannels();
 	auto numSamples = buffer.getNumSamples();
 
-	float currentBalance = mDelayParamBalance.getNextValue();
+	float currentBalance = mDelayParamBalance.getNextValue() * 0.5f + 0.5f;
 	float currentDelayTime = mDelayParamDelayTime.getTargetValue() * (float)getSampleRate();
 	float currentFeedback = mDelayParamFeedback.getNextValue();
 	float currentMix = mDelayParamMix.getNextValue();
@@ -182,11 +182,11 @@ void PingPongDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 			float fraction = readPosition - (float)localReadPosition;
 			float delayed1L = delayDataL[(localReadPosition + 0)];
 			float delayed1R = delayDataR[(localReadPosition + 0)];
-			float delayed2L = delayDataL[(localReadPosition + 1)%mDelayBufferSamples];
+			float delayed2L = delayDataL[(localReadPosition + 1) % mDelayBufferSamples];
 			float delayed2R = delayDataR[(localReadPosition + 1) % mDelayBufferSamples];
 
 			outL = delayed1L + fraction * (delayed2L - delayed1L);
-			outR= delayed1R + fraction * (delayed2R - delayed1R);
+			outR = delayed1R + fraction * (delayed2R - delayed1R);
 
 			channelDataL[sample] = inL + (outL - inL) * currentMix;
 			channelDataR[sample] = inR + (outR - inR) * currentMix;
@@ -218,7 +218,7 @@ juce::AudioProcessorEditor* PingPongDelayAudioProcessor::createEditor()
 //==============================================================================
 void PingPongDelayAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-	auto state = mDelayParameters.apvts.copyState();
+	auto state = mDelayParameters.copyState();
 	std::unique_ptr<juce::XmlElement> xml(state.createXml());
 	copyXmlToBinary(*xml, destData);
 }
@@ -228,8 +228,8 @@ void PingPongDelayAudioProcessor::setStateInformation(const void* data, int size
 	std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
 	if (xmlState.get() != nullptr)
-		if (xmlState->hasTagName(mDelayParameters.apvts.state.getType()))
-			mDelayParameters.apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
+		if (xmlState->hasTagName(mDelayParameters.state.getType()))
+			mDelayParameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
 //==============================================================================

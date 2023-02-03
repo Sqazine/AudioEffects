@@ -14,24 +14,14 @@
 /**
 */
 
-class PluginParametersManager
-{
-public:
-	PluginParametersManager(juce::AudioProcessor& p)
-		: apvts(p, nullptr)
-	{
-	}
-
-	juce::AudioProcessorValueTreeState apvts;
-};
 
 class PluginParameter
 	:public juce::LinearSmoothedValue<float>,
 	public juce::AudioProcessorValueTreeState::Listener
 {
 public:
-	PluginParameter(PluginParametersManager& parametersManager, const std::function<float(float)> callback = nullptr)
-		:parametersManager(parametersManager), callback(callback)
+	PluginParameter(juce::AudioProcessorValueTreeState& apvts,const std::function<float(float)> callback = nullptr)
+		:apvts(apvts), callback(callback)
 	{
 
 	}
@@ -49,7 +39,8 @@ public:
 		updateValue(newValue);
 	}
 
-	PluginParametersManager& parametersManager;
+	juce::AudioProcessorValueTreeState& apvts;
+
 	std::function<float(float)> callback;
 };
 
@@ -57,7 +48,7 @@ class PluginParameterSlider :public PluginParameter
 {
 public:
 
-	PluginParameterSlider(PluginParametersManager& parametersManager,
+	PluginParameterSlider(juce::AudioProcessorValueTreeState& apvts,
 		const juce::String& paramName,
 		const juce::String& labelText,
 		float minValue,
@@ -65,7 +56,7 @@ public:
 		float defaultValue,
 		std::function<float(float)> callback = nullptr,
 		bool logarithmic = false)
-		: PluginParameter(parametersManager, callback)
+		: PluginParameter(apvts, callback)
 		, paramName(paramName)
 		, labelText(labelText)
 		, minValue(minValue)
@@ -79,7 +70,7 @@ public:
 		if (logarithmic)
 			range.setSkewForCentre(sqrt(minValue * maxValue));
 
-		parametersManager.apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>
+		apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>
 			(juce::ParameterID(paramID),
 				paramName,
 				range,
@@ -91,7 +82,7 @@ public:
 				)
 		);
 
-		parametersManager.apvts.addParameterListener(paramID, this);
+		apvts.addParameterListener(paramID, this);
 		updateValue(defaultValue);
 	}
 
@@ -151,7 +142,8 @@ private:
 	int32_t mDelayBufferChannels;
 	int32_t mDelayWritePositions;
 
-	PluginParametersManager mDelayParameters;
+
+	juce::AudioProcessorValueTreeState mDelayParameters;
 	PluginParameterSlider mDelayParamDelayTime;
 	PluginParameterSlider mDelayParamFeedback;
 	PluginParameterSlider mDelayParamMix;
