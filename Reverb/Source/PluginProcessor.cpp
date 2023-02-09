@@ -166,11 +166,11 @@ void ReverbAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
 	juce::dsp::AudioBlock<float> block(buffer);
 
-	auto leftBlock = block.getSingleChannelBlock(0);
-	auto rightBlock = block.getSingleChannelBlock(1);
+	if (block.getNumChannels() > 2)
+		block = block.getSubsetChannelBlock(0, 2);
 
-	juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-	juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+	juce::dsp::ProcessContextReplacing<float> leftContext(block);
+	juce::dsp::ProcessContextReplacing<float> rightContext(block);
 	leftReverb.process(leftContext);
 	rightReverb.process(rightContext);
 }
