@@ -59,6 +59,8 @@ public:
 	TransportState state;
     juce::AudioTransportSource transportSource;
 	juce::AudioFormatManager formatManager;
+    float volume;
+    float gain;
 private:
 	std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 

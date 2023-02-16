@@ -4,7 +4,7 @@
 #include "PluginProcessor.h"
 
 
-class AudioPlayerPluginAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::ChangeListener,public juce::Timer
+class AudioPlayerPluginAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::ChangeListener, public juce::Timer
 {
 public:
 	AudioPlayerPluginAudioProcessorEditor(AudioPlayerPluginAudioProcessor&);
@@ -16,14 +16,22 @@ public:
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 	void changeState(TransportState newState);
 
-	void paintIfNoFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds);
-	void paintIfFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds);
-
 	void timerCallback() override;
 private:
+	const int32_t leftInterval = 10;
+	const int32_t rightInterval = 10;
+	const int32_t topInterval = 10;
+	const int32_t bottomInterval = 10;
+	const int32_t elementSize = 30;
+	const float sliderWidthPercent = 0.8;
+
 	juce::TextButton openButton;
 	juce::TextButton playButton;
 	juce::TextButton stopButton;
+	juce::Slider volumeSlider;
+	juce::Slider gainSlider;
+
+	juce::Rectangle<int> thumbnailBounds;
 
 	TransportState state;
 

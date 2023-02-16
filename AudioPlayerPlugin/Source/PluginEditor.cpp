@@ -8,12 +8,14 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 	thumbnailCache(5),
 	thumbnail(512, p.formatManager, thumbnailCache)
 {
+	setSize(300, 300);
+	
 	startTimer(40);
 
 	thumbnail.addChangeListener(this);
 
 	audioProcessor.transportSource.addChangeListener(this);
-	setSize(300, 200);
+
 	addAndMakeVisible(&openButton);
 	openButton.setButtonText("open...");
 	openButton.onClick = [this] {
@@ -50,6 +52,9 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 
 	addAndMakeVisible(&stopButton);
 	stopButton.setButtonText("stop");
+	stopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
+	stopButton.setEnabled(false);
+
 	stopButton.onClick = [this]
 	{
 		if (state == Paused)
@@ -63,8 +68,27 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 			audioProcessor.changeState(TransportState::Stopping);
 		}
 	};
-	stopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
-	stopButton.setEnabled(false);
+
+
+	addAndMakeVisible(&volumeSlider);
+	volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+	volumeSlider.setRange(0.0f, 127.0f,1.0f);
+	volumeSlider.setPopupDisplayEnabled(true, false, this);
+	volumeSlider.setValue(volumeSlider.getRange().getLength() / 2.0f);
+	volumeSlider.onValueChange = [this]()
+	{
+		audioProcessor.volume = volumeSlider.getValue() / volumeSlider.getRange().getLength();
+	};
+
+	addAndMakeVisible(&gainSlider);
+	gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+	gainSlider.setRange(0.0f, 127.0f, 1.0f);
+	gainSlider.setPopupDisplayEnabled(true, false, this);
+	gainSlider.setValue(gainSlider.getRange().getLength() / 2.0f);
+	gainSlider.onValueChange = [this]()
+	{
+		audioProcessor.gain = gainSlider.getValue() / gainSlider.getRange().getLength();
+	};
 }
 
 AudioPlayerPluginAudioProcessorEditor::~AudioPlayerPluginAudioProcessorEditor()
@@ -77,19 +101,45 @@ void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
 
 	g.setColour(juce::Colours::white);
 
-	juce::Rectangle<int> thumbnailBounds(10, 100, getWidth() - 20, getHeight() - 120);
+	g.drawFittedText("Volume", leftInterval +volumeSlider.getWidth(), volumeSlider.getY(), getWidth() - (leftInterval + rightInterval) *(1.0- sliderWidthPercent), elementSize * 0.67, juce::Justification::left, 1);
+	g.drawFittedText("Gain", leftInterval +gainSlider.getWidth(), gainSlider.getY(), getWidth() - (leftInterval + rightInterval) *(1.0- sliderWidthPercent), elementSize * 0.67, juce::Justification::left, 1);
 
 	if (thumbnail.getNumChannels() == 0)
-		paintIfNoFileLoaded(g, thumbnailBounds);
+	{
+		g.setColour(juce::Colour::fromRGB(50, 77, 107));
+		g.fillRect(thumbnailBounds);
+		g.setColour(juce::Colour::fromRGB(207, 229, 252));
+		g.drawFittedText("No File Loaded", thumbnailBounds, juce::Justification::centred, 1);		
+	}
 	else
-		paintIfFileLoaded(g, thumbnailBounds);
+	{
+		g.setColour(juce::Colour::fromRGB(50, 77, 107));
+		g.fillRect(thumbnailBounds);
+		g.setColour(juce::Colour::fromRGB(207, 229, 252));
+
+		auto audioLength = thumbnail.getTotalLength();
+
+		thumbnail.drawChannels(g, thumbnailBounds, 0.0, audioLength, 1.0f);
+
+		g.setColour(juce::Colours::green);
+
+		auto audioPosition = (float)audioProcessor.transportSource.getCurrentPosition();
+		auto drawPosition = (audioPosition / audioLength) * (float)thumbnailBounds.getWidth() + (float)thumbnailBounds.getX();
+
+		g.drawLine(drawPosition, (float)thumbnailBounds.getY(), drawPosition, (float)thumbnailBounds.getBottom(), 2.0f);
+	}
 }
 
 void AudioPlayerPluginAudioProcessorEditor::resized()
 {
-	openButton.setBounds(10, 10, getWidth() - 20, 20);
-	playButton.setBounds(10, 40, getWidth() - 20, 20);
-	stopButton.setBounds(10, 70, getWidth() - 20, 20);
+	openButton.setBounds(leftInterval, topInterval+ elementSize*0, getWidth() - (leftInterval+rightInterval), elementSize*0.67);
+	playButton.setBounds(leftInterval, topInterval +elementSize*1, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
+	stopButton.setBounds(leftInterval, topInterval + elementSize * 2, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
+	volumeSlider.setBounds(leftInterval, topInterval + elementSize * 3, (getWidth() - (leftInterval + rightInterval))* sliderWidthPercent, elementSize * 0.67);
+	gainSlider.setBounds(leftInterval, topInterval + elementSize * 4, (getWidth() - (leftInterval + rightInterval))* sliderWidthPercent, elementSize * 0.67);
+	thumbnailBounds.setBounds(leftInterval, topInterval + elementSize * 5, getWidth() - (leftInterval + rightInterval), elementSize * 5);
+
+	setSize(300, topInterval+elementSize*5+thumbnailBounds.getHeight()+bottomInterval);
 }
 
 void AudioPlayerPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
@@ -144,32 +194,6 @@ void AudioPlayerPluginAudioProcessorEditor::changeState(TransportState newState)
 			break;
 		}
 	}
-}
-
-void AudioPlayerPluginAudioProcessorEditor::paintIfNoFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds)
-{
-	g.setColour(juce::Colour::fromRGB(50, 77, 107));
-	g.fillRect(thumbnailBounds);
-	g.setColour(juce::Colour::fromRGB(207, 229, 252));
-	g.drawFittedText("No File Loaded", thumbnailBounds, juce::Justification::centred, 1);
-}
-
-void AudioPlayerPluginAudioProcessorEditor::paintIfFileLoaded(juce::Graphics& g, const juce::Rectangle<int>& thumbnailBounds)
-{
-	g.setColour(juce::Colour::fromRGB(50, 77, 107));
-	g.fillRect(thumbnailBounds);
-	g.setColour(juce::Colour::fromRGB(207, 229, 252));
-
-	auto audioLength = thumbnail.getTotalLength();
-
-	thumbnail.drawChannels(g, thumbnailBounds, 0.0, audioLength, 1.0f);
-
-	g.setColour(juce::Colours::green);
-
-	auto audioPosition = (float)audioProcessor.transportSource.getCurrentPosition();
-	auto drawPosition = (audioPosition / audioLength) * (float)thumbnailBounds.getWidth() + (float)thumbnailBounds.getX();
-
-	g.drawLine(drawPosition, (float)thumbnailBounds.getY(), drawPosition, (float)thumbnailBounds.getBottom(), 2.0f);
 }
 
 void AudioPlayerPluginAudioProcessorEditor::timerCallback()
