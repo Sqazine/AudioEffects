@@ -20,6 +20,7 @@ AudioPlayerPluginAudioProcessor::AudioPlayerPluginAudioProcessor()
 
 AudioPlayerPluginAudioProcessor::~AudioPlayerPluginAudioProcessor()
 {
+    transportSource.setSource(nullptr);
 }
 
 
@@ -93,6 +94,7 @@ void AudioPlayerPluginAudioProcessor::prepareToPlay (double sampleRate, int samp
 void AudioPlayerPluginAudioProcessor::releaseResources()
 {
     transportSource.releaseResources();
+    transportSource.setSource(nullptr);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations

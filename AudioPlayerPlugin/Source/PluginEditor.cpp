@@ -9,7 +9,7 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 	thumbnail(512, p.formatManager, thumbnailCache)
 {
 	setSize(300, 300);
-	
+
 	startTimer(40);
 
 	thumbnail.addChangeListener(this);
@@ -72,7 +72,7 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 
 	addAndMakeVisible(&volumeSlider);
 	volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-	volumeSlider.setRange(0.0f, 127.0f,1.0f);
+	volumeSlider.setRange(0.0f, 127.0f, 1.0f);
 	volumeSlider.setPopupDisplayEnabled(true, false, this);
 	volumeSlider.setValue(volumeSlider.getRange().getLength() / 2.0f);
 	volumeSlider.onValueChange = [this]()
@@ -101,15 +101,15 @@ void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
 
 	g.setColour(juce::Colours::white);
 
-	g.drawFittedText("Volume", leftInterval +volumeSlider.getWidth(), volumeSlider.getY(), getWidth() - (leftInterval + rightInterval) *(1.0- sliderWidthPercent), elementSize * 0.67, juce::Justification::left, 1);
-	g.drawFittedText("Gain", leftInterval +gainSlider.getWidth(), gainSlider.getY(), getWidth() - (leftInterval + rightInterval) *(1.0- sliderWidthPercent), elementSize * 0.67, juce::Justification::left, 1);
+	g.drawFittedText("Volume", leftInterval + volumeSlider.getWidth(), volumeSlider.getY(), getWidth() - (leftInterval + rightInterval) * (1.0 - sliderWidthPercent), elementSize * 0.67, juce::Justification::left, 1);
+	g.drawFittedText("Gain", leftInterval + gainSlider.getWidth(), gainSlider.getY(), getWidth() - (leftInterval + rightInterval) * (1.0 - sliderWidthPercent), elementSize * 0.67, juce::Justification::left, 1);
 
 	if (thumbnail.getNumChannels() == 0)
 	{
 		g.setColour(juce::Colour::fromRGB(50, 77, 107));
 		g.fillRect(thumbnailBounds);
 		g.setColour(juce::Colour::fromRGB(207, 229, 252));
-		g.drawFittedText("No File Loaded", thumbnailBounds, juce::Justification::centred, 1);		
+		g.drawFittedText("No File Loaded", thumbnailBounds, juce::Justification::centred, 1);
 	}
 	else
 	{
@@ -132,14 +132,14 @@ void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
 
 void AudioPlayerPluginAudioProcessorEditor::resized()
 {
-	openButton.setBounds(leftInterval, topInterval+ elementSize*0, getWidth() - (leftInterval+rightInterval), elementSize*0.67);
-	playButton.setBounds(leftInterval, topInterval +elementSize*1, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
-	stopButton.setBounds(leftInterval, topInterval + elementSize * 2, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
-	volumeSlider.setBounds(leftInterval, topInterval + elementSize * 3, (getWidth() - (leftInterval + rightInterval))* sliderWidthPercent, elementSize * 0.67);
-	gainSlider.setBounds(leftInterval, topInterval + elementSize * 4, (getWidth() - (leftInterval + rightInterval))* sliderWidthPercent, elementSize * 0.67);
-	thumbnailBounds.setBounds(leftInterval, topInterval + elementSize * 5, getWidth() - (leftInterval + rightInterval), elementSize * 5);
+	thumbnailBounds.setBounds(leftInterval, topInterval + elementSize * 0, getWidth() - (leftInterval + rightInterval), elementSize * 4);
+	openButton.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight(), getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
+	playButton.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 1.0, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
+	stopButton.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 2.0, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
+	volumeSlider.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 3.0, (getWidth() - (leftInterval + rightInterval)) * sliderWidthPercent, elementSize * 0.67);
+	gainSlider.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 4.0, (getWidth() - (leftInterval + rightInterval)) * sliderWidthPercent, elementSize * 0.67);
 
-	setSize(300, topInterval+elementSize*5+thumbnailBounds.getHeight()+bottomInterval);
+	setSize(300, topInterval + elementSize * 5 + thumbnailBounds.getHeight() + bottomInterval);
 }
 
 void AudioPlayerPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
