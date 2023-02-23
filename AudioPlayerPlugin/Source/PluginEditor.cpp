@@ -4,7 +4,6 @@
 AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(AudioPlayerPluginAudioProcessor& p)
 	: AudioProcessorEditor(&p),
 	audioProcessor(p),
-	state(p.state),
 	thumbnailCache(5),
 	thumbnail(512, p.formatManager, thumbnailCache)
 {
@@ -26,69 +25,42 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 		if (file != juce::File{})
 		{
 			audioProcessor.loadFile(file);
-			playButton.setEnabled(true);
+			playOrStopButton.setEnabled(true);
+			playOrStopButton.setButtonText("play");
+			playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
 			thumbnail.setSource(new juce::FileInputSource(file));
 		}
 			});
 	};
 
-	addAndMakeVisible(&playButton);
-	playButton.setButtonText("play");
-	playButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-	playButton.setEnabled(false);
-	playButton.onClick = [this]
+	addAndMakeVisible(&playOrStopButton);
+	playOrStopButton.setButtonText("play");
+	playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+	playOrStopButton.setEnabled(false);
+	playOrStopButton.onClick = [this]
 	{
-		if ((state == Stopped) || (state == Paused))
+		if (audioProcessor.transportSource.isPlaying())
 		{
-			changeState(Starting);
-			audioProcessor.changeState(TransportState::Starting);
-		}
-		else if (state == Playing)
-		{
-			changeState(Pausing);
-			audioProcessor.changeState(TransportState::Pausing);
-		}
-	};
-
-	addAndMakeVisible(&stopButton);
-	stopButton.setButtonText("stop");
-	stopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
-	stopButton.setEnabled(false);
-
-	stopButton.onClick = [this]
-	{
-		if (state == Paused)
-		{
-			changeState(Stopped);
-			audioProcessor.changeState(TransportState::Stopped);
+			playOrStopButton.setButtonText("play");
+			playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+			audioProcessor.transportSource.stop();
 		}
 		else
 		{
-			changeState(Stopping);
-			audioProcessor.changeState(TransportState::Stopping);
+			playOrStopButton.setButtonText("stop");
+			playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
+			audioProcessor.transportSource.start();
 		}
 	};
 
 
+	addAndMakeVisible(&gainSlider);
+	gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);	
+	gainAttachment.reset(new SliderAttachment(audioProcessor.parameters, "Gain", gainSlider));
+
 	addAndMakeVisible(&volumeSlider);
 	volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-	volumeSlider.setRange(0.0f, 127.0f, 1.0f);
-	volumeSlider.setPopupDisplayEnabled(true, false, this);
-	volumeSlider.setValue(volumeSlider.getRange().getLength() / 2.0f);
-	volumeSlider.onValueChange = [this]()
-	{
-		audioProcessor.volume = volumeSlider.getValue() / volumeSlider.getRange().getLength();
-	};
-
-	addAndMakeVisible(&gainSlider);
-	gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-	gainSlider.setRange(0.0f, 127.0f, 1.0f);
-	gainSlider.setPopupDisplayEnabled(true, false, this);
-	gainSlider.setValue(gainSlider.getRange().getLength() / 2.0f);
-	gainSlider.onValueChange = [this]()
-	{
-		audioProcessor.gain = gainSlider.getValue() / gainSlider.getRange().getLength();
-	};
+	volumeAttachment.reset(new SliderAttachment(audioProcessor.parameters, "Volume", volumeSlider));
 }
 
 AudioPlayerPluginAudioProcessorEditor::~AudioPlayerPluginAudioProcessorEditor()
@@ -132,68 +104,39 @@ void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
 
 void AudioPlayerPluginAudioProcessorEditor::resized()
 {
-	thumbnailBounds.setBounds(leftInterval, topInterval + elementSize * 0, getWidth() - (leftInterval + rightInterval), elementSize * 4);
-	openButton.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight(), getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
-	playButton.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 1.0, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
-	stopButton.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 2.0, getWidth() - (leftInterval + rightInterval), elementSize * 0.67);
-	volumeSlider.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 3.0, (getWidth() - (leftInterval + rightInterval)) * sliderWidthPercent, elementSize * 0.67);
-	gainSlider.setBounds(leftInterval, topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * 4.0, (getWidth() - (leftInterval + rightInterval)) * sliderWidthPercent, elementSize * 0.67);
+	auto elementCount = 0;
+	thumbnailBounds.setBounds(leftInterval,
+		topInterval + elementSize * 0,
+		getWidth() - (leftInterval + rightInterval),
+		elementSize * 4);
 
-	setSize(300, topInterval + elementSize * 5 + thumbnailBounds.getHeight() + bottomInterval);
+	openButton.setBounds(leftInterval,
+		topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * (elementCount++),
+		getWidth() - (leftInterval + rightInterval),
+		elementSize * 0.67);
+
+	playOrStopButton.setBounds(leftInterval,
+		topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * (elementCount++),
+		getWidth() - (leftInterval + rightInterval),
+		elementSize * 0.67);
+
+	gainSlider.setBounds(leftInterval,
+		topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * (elementCount++),
+		(getWidth() - (leftInterval + rightInterval)) * sliderWidthPercent,
+		elementSize * 0.67);
+
+	volumeSlider.setBounds(leftInterval,
+		topInterval + thumbnailBounds.getX() + thumbnailBounds.getHeight() + elementSize * (elementCount++),
+		(getWidth() - (leftInterval + rightInterval)) * sliderWidthPercent,
+		elementSize * 0.67);
+
+
+	setSize(300, topInterval + elementSize * elementCount + thumbnailBounds.getHeight() + bottomInterval);
 }
 
 void AudioPlayerPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
-
-	if (source == &audioProcessor.transportSource)
-	{
-		if (audioProcessor.transportSource.isPlaying())
-			changeState(Playing);
-		else if ((state == Stopping) || (state == Playing))
-			changeState(Stopped);
-		else if (Pausing == state)
-			changeState(Paused);
-	}
-
-	if (source == &thumbnail)
-		repaint();
-}
-
-void AudioPlayerPluginAudioProcessorEditor::changeState(TransportState newState)
-{
-	if (state != newState)
-	{
-		state = newState;
-
-		switch (state)
-		{
-		case Stopped:
-			playButton.setButtonText("Play");
-			stopButton.setButtonText("Stop");
-			stopButton.setEnabled(false);
-			break;
-		case Starting:
-			openButton.setEnabled(false);
-			break;
-		case Playing:
-			playButton.setButtonText("Pause");
-			stopButton.setButtonText("Stop");
-			stopButton.setEnabled(true);
-			break;
-		case Pausing:
-			openButton.setEnabled(true);
-			break;
-		case Paused:
-			openButton.setEnabled(true);
-			playButton.setButtonText("Resume");
-			stopButton.setButtonText("Return to Zero");
-			break;
-		case Stopping:
-			break;
-		default:
-			break;
-		}
-	}
+	repaint();
 }
 
 void AudioPlayerPluginAudioProcessorEditor::timerCallback()
