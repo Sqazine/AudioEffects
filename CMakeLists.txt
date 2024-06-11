@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.22)
 
 project(lab-audio-effect VERSION 0.0.1)
 
+set_directory_properties(PROPERTIES
+    JUCE_COMPANY_NAME       "Sqazine"
+    JUCE_COMPANY_EMAIL      "Sqazine@163.com")
+
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Bin/Debug)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Bin/Release)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Bin/Debug)
@@ -9,8 +14,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Bin/Release)
 
 add_subdirectory(JUCE)
 
-add_subdirectory(JUCE/extras/AudioPluginHost)
-
+add_subdirectory(PluginTestHost)
 add_subdirectory(AudioPlayerPlugin)
 add_subdirectory(3BandEqualizer)
 add_subdirectory(Delay)
