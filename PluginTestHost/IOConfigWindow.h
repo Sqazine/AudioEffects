@@ -21,22 +21,20 @@
    DISCLAIMED.
 
   ==============================================================================
-*/
+*/#pragma once
 
-#pragma once
-
-class MainHostWindow;
+class HostWindow;
 class GraphDocumentComponent;
 
 
-//==============================================================================
-class IOConfigurationWindow final : public  AudioProcessorEditor
+
+class IOConfigWindow final : public  AudioProcessorEditor
 {
 public:
-    IOConfigurationWindow (AudioProcessor&);
-    ~IOConfigurationWindow() override;
+    IOConfigWindow (AudioProcessor&);
+    ~IOConfigWindow() override;
 
-    //==============================================================================
+   
     void paint (Graphics& g) override;
     void resized() override;
 
@@ -50,10 +48,10 @@ private:
     InputOutputConfig* getConfig (bool isInput) noexcept    { return isInput ? inConfig.get() : outConfig.get(); }
     void update();
 
-    MainHostWindow* getMainWindow() const;
+    HostWindow* getMainWindow() const;
     GraphDocumentComponent* getGraphEditor() const;
     AudioProcessorGraph* getGraph() const;
     AudioProcessorGraph::NodeID getNodeID() const;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (IOConfigurationWindow)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (IOConfigWindow)
 };

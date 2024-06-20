@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(AudioPlayerPluginAudioProcessor& p)
+AudioPlayerAudioProcessorEditor::AudioPlayerAudioProcessorEditor(AudioPlayerAudioProcessor& p)
 	: AudioProcessorEditor(&p),
 	audioProcessor(p),
 	thumbnailCache(5),
@@ -63,11 +63,11 @@ AudioPlayerPluginAudioProcessorEditor::AudioPlayerPluginAudioProcessorEditor(Aud
 	volumeAttachment.reset(new SliderAttachment(audioProcessor.parameters, "Volume", volumeSlider));
 }
 
-AudioPlayerPluginAudioProcessorEditor::~AudioPlayerPluginAudioProcessorEditor()
+AudioPlayerAudioProcessorEditor::~AudioPlayerAudioProcessorEditor()
 {
 }
 
-void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
+void AudioPlayerAudioProcessorEditor::paint(juce::Graphics& g)
 {
 	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
@@ -102,7 +102,7 @@ void AudioPlayerPluginAudioProcessorEditor::paint(juce::Graphics& g)
 	}
 }
 
-void AudioPlayerPluginAudioProcessorEditor::resized()
+void AudioPlayerAudioProcessorEditor::resized()
 {
 	auto elementCount = 0;
 	thumbnailBounds.setBounds(leftInterval,
@@ -134,12 +134,12 @@ void AudioPlayerPluginAudioProcessorEditor::resized()
 	setSize(300, topInterval + elementSize * elementCount + thumbnailBounds.getHeight() + bottomInterval);
 }
 
-void AudioPlayerPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
+void AudioPlayerAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	repaint();
 }
 
-void AudioPlayerPluginAudioProcessorEditor::timerCallback()
+void AudioPlayerAudioProcessorEditor::timerCallback()
 {
 	repaint();
 }

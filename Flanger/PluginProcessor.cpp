@@ -1,14 +1,8 @@
-/*
-  ==============================================================================
 
-	This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
 
 #include "PluginProcessor.h"
 
-//==============================================================================
+
 FlangerAudioProcessor::FlangerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
@@ -39,7 +33,7 @@ FlangerAudioProcessor::~FlangerAudioProcessor()
 {
 }
 
-//==============================================================================
+
 const juce::String FlangerAudioProcessor::getName() const
 {
 	return JucePlugin_Name;
@@ -101,7 +95,7 @@ void FlangerAudioProcessor::changeProgramName(int index, const juce::String& new
 {
 }
 
-//==============================================================================
+
 void FlangerAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	constexpr double smoothTime = 1e-3;
@@ -255,7 +249,7 @@ void FlangerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 	mLfoPhase = phaseMain;
 }
 
-//==============================================================================
+
 bool FlangerAudioProcessor::hasEditor() const
 {
 	return true; // (change this to false if you choose to not supply an editor)
@@ -266,7 +260,7 @@ juce::AudioProcessorEditor* FlangerAudioProcessor::createEditor()
 	return new juce::GenericAudioProcessorEditor(*this);
 }
 
-//==============================================================================
+
 void FlangerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
 	// You should use this method to store your parameters in the memory block.
@@ -320,7 +314,7 @@ float FlangerAudioProcessor::Lfo(float phase, int32_t waveform)
 	return outData;
 }
 
-//==============================================================================
+
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

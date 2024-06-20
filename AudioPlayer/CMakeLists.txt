@@ -1,5 +1,5 @@
 
-set(PLUGIN_NAME AudioPlayerPlugin)
+set(PLUGIN_NAME AudioPlayer)
 
 juce_add_plugin(${PLUGIN_NAME}
     # VERSION ...                               # Set this if the plugin version is different to the project version

@@ -1,14 +1,8 @@
-/*
-  ==============================================================================
 
-	This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
 
 #include "PluginProcessor.h"
 
-//==============================================================================
+
 DistortionAudioProcessor::DistortionAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
@@ -54,7 +48,7 @@ DistortionAudioProcessor::DistortionAudioProcessor()
 			{
 			}
 
-			//==============================================================================
+			
 			const juce::String DistortionAudioProcessor::getName() const
 			{
 				return JucePlugin_Name;
@@ -116,7 +110,7 @@ DistortionAudioProcessor::DistortionAudioProcessor()
 			{
 			}
 
-			//==============================================================================
+			
 			void DistortionAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 			{
 				juce::dsp::ProcessSpec spec;
@@ -221,7 +215,7 @@ DistortionAudioProcessor::DistortionAudioProcessor()
 				outputVolume.process(ctx);
 			}
 
-			//==============================================================================
+			
 			bool DistortionAudioProcessor::hasEditor() const
 			{
 				return true; // (change this to false if you choose to not supply an editor)
@@ -232,7 +226,7 @@ DistortionAudioProcessor::DistortionAudioProcessor()
 				return new juce::GenericAudioProcessorEditor(*this);
 			}
 
-			//==============================================================================
+			
 			void DistortionAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 			{
 				auto state = parameters.copyState();
@@ -249,7 +243,7 @@ DistortionAudioProcessor::DistortionAudioProcessor()
 						parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 			}
 
-			//==============================================================================
+			
 			// This creates new instances of the plugin..
 			juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 			{

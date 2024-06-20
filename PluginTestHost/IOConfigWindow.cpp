@@ -23,14 +23,14 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
-#include "../UI/GraphEditorPanel.h"
-#include "InternalPlugins.h"
-#include "../UI/MainHostWindow.h"
-#include "IOConfigurationWindow.h"
+#include "JuceHeader.h"
+#include "GraphEditorPanel.h"
+#include "InternalPluginFormat.h"
+#include "HostWindow.h"
+#include "IOConfigWindow.h"
 
 
-//==============================================================================
+
 struct NumberedBoxes final : public TableListBox,
                         private TableListBoxModel,
                         private Button::Listener
@@ -50,7 +50,7 @@ struct NumberedBoxes final : public TableListBox,
         minusButtonColumnId = 129
     };
 
-    //==============================================================================
+   
     NumberedBoxes (Listener& listenerToUse, bool canCurrentlyAddColumn, bool canCurrentlyRemoveColumn)
         : TableListBox ("NumberedBoxes", this),
           listener (listenerToUse),
@@ -96,11 +96,11 @@ struct NumberedBoxes final : public TableListBox,
     }
 
 private:
-    //==============================================================================
+   
     Listener& listener;
     bool canAddColumn, canRemoveColumn;
 
-    //==============================================================================
+   
     int getNumRows() override                                             { return 1; }
     void paintCell (Graphics&, int, int, int, int, bool) override         {}
     void paintRowBackground (Graphics& g, int, int, int, bool) override   { g.fillAll (Colours::grey); }
@@ -138,7 +138,7 @@ private:
         return textButton;
     }
 
-    //==============================================================================
+   
     String getButtonName (int columnId)
     {
         if (columnId == plusButtonColumnId)  return "+";
@@ -169,13 +169,13 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NumberedBoxes)
 };
 
-//==============================================================================
-class IOConfigurationWindow::InputOutputConfig final : public Component,
+
+class IOConfigWindow::InputOutputConfig final : public Component,
                                                        private Button::Listener,
                                                        private NumberedBoxes::Listener
 {
 public:
-    InputOutputConfig (IOConfigurationWindow& parent, bool direction)
+    InputOutputConfig (IOConfigWindow& parent, bool direction)
         : owner (parent),
           ioTitle ("ioLabel", direction ? "Input Configuration" : "Output Configuration"),
           ioBuses (*this, false, false),
@@ -297,7 +297,7 @@ private:
         }
     }
 
-    //==============================================================================
+   
     void applyBusLayout (const AudioChannelSet& set)
     {
         if (auto* p = owner.getAudioProcessor())
@@ -350,7 +350,7 @@ private:
         }
     }
 
-    //==============================================================================
+   
     void addColumn() override
     {
         if (auto* p = owner.getAudioProcessor())
@@ -411,8 +411,8 @@ private:
         }
     }
 
-    //==============================================================================
-    IOConfigurationWindow& owner;
+   
+    IOConfigWindow& owner;
     Label ioTitle, name;
     Label nameLabel { "nameLabel", "Bus Name:" };
     Label layoutLabel { "layoutLabel", "Channel Layout:" };
@@ -426,7 +426,7 @@ private:
 };
 
 
-IOConfigurationWindow::IOConfigurationWindow (AudioProcessor& p)
+IOConfigWindow::IOConfigWindow (AudioProcessor& p)
    : AudioProcessorEditor (&p),
      title ("title", p.getName())
 {
@@ -457,7 +457,7 @@ IOConfigurationWindow::IOConfigurationWindow (AudioProcessor& p)
     setSize (400, (inConfig != nullptr && outConfig != nullptr ? 160 : 0) + 200);
 }
 
-IOConfigurationWindow::~IOConfigurationWindow()
+IOConfigWindow::~IOConfigWindow()
 {
     if (auto* graph = getGraph())
     {
@@ -477,12 +477,12 @@ IOConfigurationWindow::~IOConfigurationWindow()
     }
 }
 
-void IOConfigurationWindow::paint (Graphics& g)
+void IOConfigWindow::paint (Graphics& g)
 {
      g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 }
 
-void IOConfigurationWindow::resized()
+void IOConfigWindow::resized()
 {
     auto r = getLocalBounds().reduced (10);
 
@@ -496,7 +496,7 @@ void IOConfigurationWindow::resized()
         outConfig->setBounds (r.removeFromTop (160));
 }
 
-void IOConfigurationWindow::update()
+void IOConfigWindow::update()
 {
     auto nodeID = getNodeID();
 
@@ -509,7 +509,7 @@ void IOConfigurationWindow::update()
             panel->updateComponents();
 }
 
-AudioProcessorGraph::NodeID IOConfigurationWindow::getNodeID() const
+AudioProcessorGraph::NodeID IOConfigWindow::getNodeID() const
 {
     if (auto* graph = getGraph())
         for (auto* node : graph->getNodes())
@@ -519,18 +519,18 @@ AudioProcessorGraph::NodeID IOConfigurationWindow::getNodeID() const
     return {};
 }
 
-MainHostWindow* IOConfigurationWindow::getMainWindow() const
+HostWindow* IOConfigWindow::getMainWindow() const
 {
     auto& desktop = Desktop::getInstance();
 
     for (int i = desktop.getNumComponents(); --i >= 0;)
-        if (auto* mainWindow = dynamic_cast<MainHostWindow*> (desktop.getComponent (i)))
+        if (auto* mainWindow = dynamic_cast<HostWindow*> (desktop.getComponent (i)))
             return mainWindow;
 
     return nullptr;
 }
 
-GraphDocumentComponent* IOConfigurationWindow::getGraphEditor() const
+GraphDocumentComponent* IOConfigWindow::getGraphEditor() const
 {
     if (auto* mainWindow = getMainWindow())
         return mainWindow->graphHolder.get();
@@ -538,7 +538,7 @@ GraphDocumentComponent* IOConfigurationWindow::getGraphEditor() const
     return nullptr;
 }
 
-AudioProcessorGraph* IOConfigurationWindow::getGraph() const
+AudioProcessorGraph* IOConfigWindow::getGraph() const
 {
     if (auto* graphEditor = getGraphEditor())
         if (auto* panel = graphEditor->graph.get())

@@ -2,9 +2,9 @@
 #include "PluginEditor.h"
 
 
-AudioPlayerPluginAudioProcessor::AudioPlayerPluginAudioProcessor()
+AudioPlayerAudioProcessor::AudioPlayerAudioProcessor()
 	: AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-	parameters(*this, nullptr, juce::Identifier("AudioPlayerPluginParams"),
+	parameters(*this, nullptr, juce::Identifier("AudioPlayerParams"),
 		{
 			std::make_unique<juce::AudioParameterFloat>("Gain","Gain",juce::NormalisableRange<float>(0.0f,1.0f,0.01f),0.5f,"",juce::AudioProcessorParameter::genericParameter,
 			[](float value,int)
@@ -29,18 +29,18 @@ AudioPlayerPluginAudioProcessor::AudioPlayerPluginAudioProcessor()
 	formatManager.registerBasicFormats();
 }
 
-AudioPlayerPluginAudioProcessor::~AudioPlayerPluginAudioProcessor()
+AudioPlayerAudioProcessor::~AudioPlayerAudioProcessor()
 {
 	transportSource.setSource(nullptr);
 }
 
 
-const juce::String AudioPlayerPluginAudioProcessor::getName() const
+const juce::String AudioPlayerAudioProcessor::getName() const
 {
 	return JucePlugin_Name;
 }
 
-bool AudioPlayerPluginAudioProcessor::acceptsMidi() const
+bool AudioPlayerAudioProcessor::acceptsMidi() const
 {
 #if JucePlugin_WantsMidiInput
 	return true;
@@ -49,7 +49,7 @@ bool AudioPlayerPluginAudioProcessor::acceptsMidi() const
 #endif
 }
 
-bool AudioPlayerPluginAudioProcessor::producesMidi() const
+bool AudioPlayerAudioProcessor::producesMidi() const
 {
 #if JucePlugin_ProducesMidiOutput
 	return true;
@@ -58,7 +58,7 @@ bool AudioPlayerPluginAudioProcessor::producesMidi() const
 #endif
 }
 
-bool AudioPlayerPluginAudioProcessor::isMidiEffect() const
+bool AudioPlayerAudioProcessor::isMidiEffect() const
 {
 #if JucePlugin_IsMidiEffect
 	return true;
@@ -67,49 +67,49 @@ bool AudioPlayerPluginAudioProcessor::isMidiEffect() const
 #endif
 }
 
-double AudioPlayerPluginAudioProcessor::getTailLengthSeconds() const
+double AudioPlayerAudioProcessor::getTailLengthSeconds() const
 {
 	return 0.0;
 }
 
-int AudioPlayerPluginAudioProcessor::getNumPrograms()
+int AudioPlayerAudioProcessor::getNumPrograms()
 {
 	return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
 	// so this should be at least 1, even if you're not really implementing programs.
 }
 
-int AudioPlayerPluginAudioProcessor::getCurrentProgram()
+int AudioPlayerAudioProcessor::getCurrentProgram()
 {
 	return 0;
 }
 
-void AudioPlayerPluginAudioProcessor::setCurrentProgram(int index)
+void AudioPlayerAudioProcessor::setCurrentProgram(int index)
 {
 }
 
-const juce::String AudioPlayerPluginAudioProcessor::getProgramName(int index)
+const juce::String AudioPlayerAudioProcessor::getProgramName(int index)
 {
 	return {};
 }
 
-void AudioPlayerPluginAudioProcessor::changeProgramName(int index, const juce::String& newName)
+void AudioPlayerAudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
 }
 
 
-void AudioPlayerPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void AudioPlayerAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	transportSource.prepareToPlay(samplesPerBlock, sampleRate);
 }
 
-void AudioPlayerPluginAudioProcessor::releaseResources()
+void AudioPlayerAudioProcessor::releaseResources()
 {
 	transportSource.releaseResources();
 	transportSource.setSource(nullptr);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool AudioPlayerPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool AudioPlayerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
 #if JucePlugin_IsMidiEffect
 	juce::ignoreUnused(layouts);
@@ -134,7 +134,7 @@ bool AudioPlayerPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& 
 }
 #endif
 
-void AudioPlayerPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void AudioPlayerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 	/*auto gainLength = parameters.getParameterRange("Gain").getRange().getLength();
 	auto volumeLength = parameters.getParameterRange("Volume").getRange().getLength();*/
@@ -158,25 +158,25 @@ void AudioPlayerPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buf
 }
 
 
-bool AudioPlayerPluginAudioProcessor::hasEditor() const
+bool AudioPlayerAudioProcessor::hasEditor() const
 {
 	return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* AudioPlayerPluginAudioProcessor::createEditor()
+juce::AudioProcessorEditor* AudioPlayerAudioProcessor::createEditor()
 {
-	return new AudioPlayerPluginAudioProcessorEditor(*this);
+	return new AudioPlayerAudioProcessorEditor(*this);
 }
 
 
-void AudioPlayerPluginAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+void AudioPlayerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
 	auto state = parameters.copyState();
 	std::unique_ptr<juce::XmlElement> xml(state.createXml());
 	copyXmlToBinary(*xml, destData);
 }
 
-void AudioPlayerPluginAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+void AudioPlayerAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
 	std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
@@ -185,7 +185,7 @@ void AudioPlayerPluginAudioProcessor::setStateInformation(const void* data, int 
 			parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
-void AudioPlayerPluginAudioProcessor::loadFile(juce::File& file)
+void AudioPlayerAudioProcessor::loadFile(juce::File& file)
 {
 	auto reader = formatManager.createReaderFor(file);
 	if (reader)
@@ -200,5 +200,5 @@ void AudioPlayerPluginAudioProcessor::loadFile(juce::File& file)
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-	return new AudioPlayerPluginAudioProcessor();
+	return new AudioPlayerAudioProcessor();
 }

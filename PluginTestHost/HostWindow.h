@@ -21,15 +21,13 @@
    DISCLAIMED.
 
   ==============================================================================
-*/
-
-#pragma once
+*/#pragma once
 
 #include "PluginGraph.h"
 #include "GraphEditorPanel.h"
 
 
-//==============================================================================
+
 namespace CommandIDs
 {
    #if ! (JUCE_IOS || JUCE_ANDROID)
@@ -46,12 +44,12 @@ namespace CommandIDs
     static const int autoScalePluginWindows = 0x30600;
 }
 
-//==============================================================================
+
 ApplicationCommandManager& getCommandManager();
 ApplicationProperties& getAppProperties();
 bool isOnTouchDevice();
 
-//==============================================================================
+
 enum class AutoScale
 {
     scaled,
@@ -73,19 +71,19 @@ void addPluginAutoScaleOptionsSubMenu (AudioPluginInstance*, PopupMenu&);
 
 constexpr const char* processUID = "juceaudiopluginhost";
 
-//==============================================================================
-class MainHostWindow final : public DocumentWindow,
+
+class HostWindow final : public DocumentWindow,
                              public MenuBarModel,
                              public ApplicationCommandTarget,
                              public ChangeListener,
                              public FileDragAndDropTarget
 {
 public:
-    //==============================================================================
-    MainHostWindow();
-    ~MainHostWindow() override;
+   
+    HostWindow();
+    ~HostWindow() override;
 
-    //==============================================================================
+   
     void closeButtonPressed() override;
     void changeListenerCallback (ChangeBroadcaster*) override;
 
@@ -115,7 +113,7 @@ public:
     std::unique_ptr<GraphDocumentComponent> graphHolder;
 
 private:
-    //==============================================================================
+   
     static bool isDoublePrecisionProcessingEnabled();
     static bool isAutoScalePluginWindowsEnabled();
 
@@ -124,7 +122,7 @@ private:
 
     void showAudioSettings();
 
-    //==============================================================================
+   
     AudioDeviceManager deviceManager;
     AudioPluginFormatManager formatManager;
 
@@ -136,5 +134,5 @@ private:
     class PluginListWindow;
     std::unique_ptr<PluginListWindow> pluginListWindow;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainHostWindow)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostWindow)
 };

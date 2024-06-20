@@ -1,14 +1,8 @@
-/*
-  ==============================================================================
 
-	This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
 
 #include "PluginProcessor.h"
 
-//==============================================================================
+
 FilterAudioProcessor::FilterAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
@@ -29,7 +23,7 @@ FilterAudioProcessor::~FilterAudioProcessor()
 {
 }
 
-//==============================================================================
+
 const juce::String FilterAudioProcessor::getName() const
 {
 	return JucePlugin_Name;
@@ -96,7 +90,7 @@ void FilterAudioProcessor::reset()
 	filter.reset();
 }
 
-//==============================================================================
+
 void FilterAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	this->sampleRate = sampleRate;
@@ -153,7 +147,7 @@ void FilterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 	filter.process(context);
 }
 
-//==============================================================================
+
 bool FilterAudioProcessor::hasEditor() const
 {
 	return true; // (change this to false if you choose to not supply an editor)
@@ -164,7 +158,7 @@ juce::AudioProcessorEditor* FilterAudioProcessor::createEditor()
 	return new juce::GenericAudioProcessorEditor(*this);
 }
 
-//==============================================================================
+
 void FilterAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
 	// You should use this method to store your parameters in the memory block.
@@ -178,7 +172,7 @@ void FilterAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 	// whose contents will have been created by the getStateInformation() call.
 }
 
-//==============================================================================
+
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

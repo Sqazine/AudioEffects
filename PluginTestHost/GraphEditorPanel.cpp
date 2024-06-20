@@ -23,12 +23,12 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include "GraphEditorPanel.h"
-#include "InternalPlugins.h"
-#include "MainHostWindow.h"
+#include "InternalPluginFormat.h"
+#include "HostWindow.h"
 
-//==============================================================================
+
 #if JUCE_IOS
  class AUScanner
  {
@@ -91,7 +91,7 @@
  };
 #endif
 
-//==============================================================================
+
 struct GraphEditorPanel::PinComponent final : public Component,
                                               public SettableTooltipClient
 {
@@ -169,7 +169,7 @@ struct GraphEditorPanel::PinComponent final : public Component,
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PinComponent)
 };
 
-//==============================================================================
+
 struct GraphEditorPanel::PluginComponent final : public Component,
                                                  public Timer,
                                                  private AudioProcessorParameter::Listener,
@@ -553,7 +553,7 @@ struct GraphEditorPanel::PluginComponent final : public Component,
 };
 
 
-//==============================================================================
+
 struct GraphEditorPanel::ConnectorComponent final : public Component,
                                                     public SettableTooltipClient
 {
@@ -749,7 +749,7 @@ struct GraphEditorPanel::ConnectorComponent final : public Component,
 };
 
 
-//==============================================================================
+
 GraphEditorPanel::GraphEditorPanel (PluginGraph& g)  : graph (g)
 {
     graph.addChangeListener (this);
@@ -887,14 +887,14 @@ void GraphEditorPanel::showPopupMenu (Point<int> mousePos)
 {
     menu.reset (new PopupMenu);
 
-    if (auto* mainWindow = findParentComponentOfClass<MainHostWindow>())
+    if (auto* mainWindow = findParentComponentOfClass<HostWindow>())
     {
         mainWindow->addPluginsToMenu (*menu);
 
         menu->showMenuAsync ({},
                              ModalCallbackFunction::create ([this, mousePos] (int r)
                                                             {
-                                                                if (auto* mainWin = findParentComponentOfClass<MainHostWindow>())
+                                                                if (auto* mainWin = findParentComponentOfClass<HostWindow>())
                                                                     if (const auto chosen = mainWin->getChosenType (r))
                                                                         createNewPlugin (*chosen, mousePos);
                                                             }));
@@ -1000,7 +1000,7 @@ void GraphEditorPanel::timerCallback()
     showPopupMenu (originalTouchPos);
 }
 
-//==============================================================================
+
 struct GraphDocumentComponent::TooltipBar final : public Component,
                                                   private Timer
 {
@@ -1037,7 +1037,7 @@ struct GraphDocumentComponent::TooltipBar final : public Component,
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TooltipBar)
 };
 
-//==============================================================================
+
 class GraphDocumentComponent::TitleBarComponent final : public Component,
                                                         private Button::Listener
 {
@@ -1133,7 +1133,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TitleBarComponent)
 };
 
-//==============================================================================
+
 struct GraphDocumentComponent::PluginListBoxModel final : public ListBoxModel,
                                                           public ChangeListener,
                                                           public MouseListener
@@ -1201,7 +1201,7 @@ struct GraphDocumentComponent::PluginListBoxModel final : public ListBoxModel,
     JUCE_DECLARE_NON_COPYABLE (PluginListBoxModel)
 };
 
-//==============================================================================
+
 GraphDocumentComponent::GraphDocumentComponent (AudioPluginFormatManager& fm,
                                                 AudioDeviceManager& dm,
                                                 KnownPluginList& kpl)

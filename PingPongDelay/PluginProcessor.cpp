@@ -1,14 +1,8 @@
-/*
-  ==============================================================================
 
-	This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
 
 #include "PluginProcessor.h"
 
-//==============================================================================
+
 PingPongDelayAudioProcessor::PingPongDelayAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
@@ -33,7 +27,7 @@ PingPongDelayAudioProcessor::~PingPongDelayAudioProcessor()
 {
 }
 
-//==============================================================================
+
 const juce::String PingPongDelayAudioProcessor::getName() const
 {
 	return JucePlugin_Name;
@@ -95,7 +89,7 @@ void PingPongDelayAudioProcessor::changeProgramName(int index, const juce::Strin
 {
 }
 
-//==============================================================================
+
 void PingPongDelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	const double smoothTime = 1e-3;
@@ -204,7 +198,7 @@ void PingPongDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 		buffer.clear(channel, 0, numSamples);
 }
 
-//==============================================================================
+
 bool PingPongDelayAudioProcessor::hasEditor() const
 {
 	return true; // (change this to false if you choose to not supply an editor)
@@ -215,7 +209,7 @@ juce::AudioProcessorEditor* PingPongDelayAudioProcessor::createEditor()
 	return new juce::GenericAudioProcessorEditor(*this);
 }
 
-//==============================================================================
+
 void PingPongDelayAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
 	auto state = mDelayParameters.copyState();
@@ -232,7 +226,7 @@ void PingPongDelayAudioProcessor::setStateInformation(const void* data, int size
 			mDelayParameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
-//==============================================================================
+
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

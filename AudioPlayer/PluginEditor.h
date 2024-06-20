@@ -3,11 +3,11 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-class AudioPlayerPluginAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::ChangeListener, public juce::Timer
+class AudioPlayerAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::ChangeListener, public juce::Timer
 {
 public:
-	AudioPlayerPluginAudioProcessorEditor(AudioPlayerPluginAudioProcessor&);
-	~AudioPlayerPluginAudioProcessorEditor() override;
+	AudioPlayerAudioProcessorEditor(AudioPlayerAudioProcessor&);
+	~AudioPlayerAudioProcessorEditor() override;
 
 	void paint(juce::Graphics&) override;
 	void resized() override;
@@ -43,7 +43,7 @@ private:
 	juce::AudioThumbnail thumbnail;
 	juce::AudioFormatManager formatManager;
 
-	AudioPlayerPluginAudioProcessor& audioProcessor;
+	AudioPlayerAudioProcessor& audioProcessor;
 
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPlayerPluginAudioProcessorEditor)
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPlayerAudioProcessorEditor)
 };

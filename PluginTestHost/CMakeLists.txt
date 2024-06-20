@@ -1,4 +1,4 @@
-set(EXE_NAME PluginTestHost)
+set(EXE_NAME PluginHost)
 
 juce_add_gui_app(${EXE_NAME} MICROPHONE_PERMISSION_ENABLED TRUE)
 

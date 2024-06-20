@@ -21,27 +21,25 @@
    DISCLAIMED.
 
   ==============================================================================
-*/
+*/#pragma once
 
-#pragma once
-
+#include "JuceHeader.h"
 #include "PluginGraph.h"
 
 
-//==============================================================================
 /**
     Manages the internal plugin types.
 */
 class InternalPluginFormat final : public AudioPluginFormat
 {
 public:
-    //==============================================================================
+   
     InternalPluginFormat();
 
-    //==============================================================================
+   
     const std::vector<PluginDescription>& getAllTypes() const;
 
-    //==============================================================================
+   
     static String getIdentifier()                                                       { return "Internal"; }
     String getName() const override                                                     { return getIdentifier(); }
     bool fileMightContainThisPluginType (const String&) override                        { return true; }
@@ -71,7 +69,7 @@ private:
         const std::vector<PluginDescription> descriptions;
     };
 
-    //==============================================================================
+   
     void createPluginInstance (const PluginDescription&,
                                double initialSampleRate, int initialBufferSize,
                                PluginCreationCallback) override;

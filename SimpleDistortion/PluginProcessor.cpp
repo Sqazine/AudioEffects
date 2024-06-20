@@ -1,15 +1,8 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
 
 #include "PluginProcessor.h"
 
 
-//==============================================================================
+
 SimpleDistortionAudioProcessor::SimpleDistortionAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -30,7 +23,7 @@ SimpleDistortionAudioProcessor::~SimpleDistortionAudioProcessor()
 {
 }
 
-//==============================================================================
+
 const juce::String SimpleDistortionAudioProcessor::getName() const
 {
     return JucePlugin_Name;
@@ -92,7 +85,7 @@ void SimpleDistortionAudioProcessor::changeProgramName (int index, const juce::S
 {
 }
 
-//==============================================================================
+
 void SimpleDistortionAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     processChain.reset();
@@ -170,7 +163,7 @@ void SimpleDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
 	processChain.process(context);
 }
 
-//==============================================================================
+
 bool SimpleDistortionAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
@@ -181,7 +174,7 @@ juce::AudioProcessorEditor* SimpleDistortionAudioProcessor::createEditor()
     return new juce::GenericAudioProcessorEditor (*this);
 }
 
-//==============================================================================
+
 void SimpleDistortionAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
@@ -195,7 +188,7 @@ void SimpleDistortionAudioProcessor::setStateInformation (const void* data, int 
     // whose contents will have been created by the getStateInformation() call.
 }
 
-//==============================================================================
+
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

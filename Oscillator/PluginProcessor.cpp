@@ -84,7 +84,7 @@ void OscillatorAudioProcessor::changeProgramName(int index, const juce::String& 
 {
 }
 
-//==============================================================================
+
 void OscillatorAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	previousFrequency = *frequency;
@@ -138,7 +138,7 @@ void OscillatorAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
 	oscillator.process(context);
 }
 
-//==============================================================================
+
 bool OscillatorAudioProcessor::hasEditor() const
 {
 	return true; // (change this to false if you choose to not supply an editor)
@@ -149,7 +149,7 @@ juce::AudioProcessorEditor* OscillatorAudioProcessor::createEditor()
 	return new juce::GenericAudioProcessorEditor(*this);
 }
 
-//==============================================================================
+
 void OscillatorAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
 	// You should use this method to store your parameters in the memory block.
@@ -168,7 +168,7 @@ void OscillatorAudioProcessor::reset()
 	oscillator.reset();
 }
 
-//==============================================================================
+
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

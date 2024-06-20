@@ -21,15 +21,13 @@
    DISCLAIMED.
 
   ==============================================================================
-*/
-
-#pragma once
+*/#pragma once
 
 #include "PluginGraph.h"
 
-class MainHostWindow;
+class HostWindow;
 
-//==============================================================================
+
 /**
     A panel that displays and edits a PluginGraph.
 */
@@ -38,7 +36,7 @@ class GraphEditorPanel final : public Component,
                                private Timer
 {
 public:
-    //==============================================================================
+   
     GraphEditorPanel (PluginGraph& graph);
     ~GraphEditorPanel() override;
 
@@ -53,20 +51,20 @@ public:
 
     void changeListenerCallback (ChangeBroadcaster*) override;
 
-    //==============================================================================
+   
     void updateComponents();
 
-    //==============================================================================
+   
     void showPopupMenu (Point<int> position);
 
-    //==============================================================================
+   
     void beginConnectorDrag (AudioProcessorGraph::NodeAndChannel source,
                              AudioProcessorGraph::NodeAndChannel dest,
                              const MouseEvent&);
     void dragConnector (const MouseEvent&);
     void endDraggingConnector (const MouseEvent&);
 
-    //==============================================================================
+   
     PluginGraph& graph;
 
 private:
@@ -83,7 +81,7 @@ private:
     ConnectorComponent* getComponentForConnection (const AudioProcessorGraph::Connection&) const;
     PinComponent* findPinAt (Point<float>) const;
 
-    //==============================================================================
+   
     Point<int> originalTouchPos;
 
     void timerCallback() override;
@@ -92,7 +90,7 @@ private:
 };
 
 
-//==============================================================================
+
 /**
     A panel that embeds a GraphEditorPanel with a midi keyboard at the bottom.
 
@@ -110,33 +108,33 @@ public:
 
     ~GraphDocumentComponent() override;
 
-    //==============================================================================
+   
     void createNewPlugin (const PluginDescriptionAndPreference&, Point<int> position);
     void setDoublePrecision (bool doublePrecision);
     bool closeAnyOpenPluginWindows();
 
-    //==============================================================================
+   
     std::unique_ptr<PluginGraph> graph;
 
     void resized() override;
     void releaseGraph();
 
-    //==============================================================================
+   
     bool isInterestedInDragSource (const SourceDetails&) override;
     void itemDropped (const SourceDetails&) override;
 
-    //==============================================================================
+   
     std::unique_ptr<GraphEditorPanel> graphPanel;
     std::unique_ptr<MidiKeyboardComponent> keyboardComp;
 
-    //==============================================================================
+   
     void showSidePanel (bool isSettingsPanel);
     void hideLastSidePanel();
 
     BurgerMenuComponent burgerMenu;
 
 private:
-    //==============================================================================
+   
     AudioDeviceManager& deviceManager;
     KnownPluginList& pluginList;
 
@@ -150,7 +148,7 @@ private:
     class TitleBarComponent;
     std::unique_ptr<TitleBarComponent> titleBarComponent;
 
-    //==============================================================================
+   
     struct PluginListBoxModel;
     std::unique_ptr<PluginListBoxModel> pluginListBoxModel;
 
@@ -160,13 +158,13 @@ private:
     SidePanel pluginListSidePanel    { "Plugins", 250, false };
     SidePanel* lastOpenedSidePanel = nullptr;
 
-    //==============================================================================
+   
     void changeListenerCallback (ChangeBroadcaster*) override;
 
     void init();
     void checkAvailableWidth();
     void updateMidiOutput();
 
-    //==============================================================================
+   
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GraphDocumentComponent)
 };

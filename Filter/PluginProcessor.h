@@ -1,26 +1,14 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
-
-//==============================================================================
-/**
-*/
 class FilterAudioProcessor  : public juce::AudioProcessor
 {
 public:
-    //==============================================================================
+    
     FilterAudioProcessor();
     ~FilterAudioProcessor() override;
 
-    //==============================================================================
+    
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
@@ -30,11 +18,11 @@ public:
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
-    //==============================================================================
+    
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
 
-    //==============================================================================
+    
     const juce::String getName() const override;
 
     bool acceptsMidi() const override;
@@ -42,7 +30,7 @@ public:
     bool isMidiEffect() const override;
     double getTailLengthSeconds() const override;
 
-    //==============================================================================
+    
     int getNumPrograms() override;
     int getCurrentProgram() override;
     void setCurrentProgram (int index) override;
@@ -51,7 +39,7 @@ public:
 
     void reset() override;
 
-    //==============================================================================
+    
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
@@ -60,6 +48,6 @@ private:
     juce::AudioParameterFloat* frequency;
     double sampleRate;
     juce::dsp::ProcessorDuplicator < juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float> > filter;
-    //==============================================================================
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterAudioProcessor)
 };

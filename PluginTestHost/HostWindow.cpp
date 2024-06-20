@@ -23,13 +23,13 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
-#include "MainHostWindow.h"
-#include "InternalPlugins.h"
+#include "JuceHeader.h"
+#include "HostWindow.h"
+#include "InternalPluginFormat.h"
 
 constexpr const char* scanModeKey = "pluginScanMode";
 
-//==============================================================================
+
 class Superprocess final : private ChildProcessCoordinator
 {
 public:
@@ -93,7 +93,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Superprocess)
 };
 
-//==============================================================================
+
 class CustomPluginScanner final : public KnownPluginList::CustomScanner,
                                   private ChangeListener
 {
@@ -201,7 +201,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CustomPluginScanner)
 };
 
-//==============================================================================
+
 class CustomPluginListComponent final : public PluginListComponent
 {
 public:
@@ -255,11 +255,11 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CustomPluginListComponent)
 };
 
-//==============================================================================
-class MainHostWindow::PluginListWindow final : public DocumentWindow
+
+class HostWindow::PluginListWindow final : public DocumentWindow
 {
 public:
-    PluginListWindow (MainHostWindow& mw, AudioPluginFormatManager& pluginFormatManager)
+    PluginListWindow (HostWindow& mw, AudioPluginFormatManager& pluginFormatManager)
         : DocumentWindow ("Available Plugins",
                           LookAndFeel::getDefaultLookAndFeel().findColour (ResizableWindow::backgroundColourId),
                           DocumentWindow::minimiseButton | DocumentWindow::closeButton),
@@ -294,13 +294,13 @@ public:
     }
 
 private:
-    MainHostWindow& owner;
+    HostWindow& owner;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginListWindow)
 };
 
-//==============================================================================
-MainHostWindow::MainHostWindow()
+
+HostWindow::HostWindow()
     : DocumentWindow (JUCEApplication::getInstance()->getApplicationName(),
                       LookAndFeel::getDefaultLookAndFeel().findColour (ResizableWindow::backgroundColourId),
                       DocumentWindow::allButtons)
@@ -308,7 +308,7 @@ MainHostWindow::MainHostWindow()
     formatManager.addDefaultFormats();
     formatManager.addFormat (new InternalPluginFormat());
 
-    auto safeThis = SafePointer<MainHostWindow> (this);
+    auto safeThis = SafePointer<HostWindow> (this);
     RuntimePermissions::request (RuntimePermissions::recordAudio,
                                  [safeThis] (bool granted) mutable
                                  {
@@ -370,7 +370,7 @@ MainHostWindow::MainHostWindow()
     getCommandManager().setFirstCommandTarget (this);
 }
 
-MainHostWindow::~MainHostWindow()
+HostWindow::~HostWindow()
 {
     pluginListWindow = nullptr;
     knownPluginList.removeChangeListener (this);
@@ -392,7 +392,7 @@ MainHostWindow::~MainHostWindow()
     graphHolder = nullptr;
 }
 
-void MainHostWindow::closeButtonPressed()
+void HostWindow::closeButtonPressed()
 {
     tryToQuitApplication();
 }
@@ -411,7 +411,7 @@ struct AsyncQuitRetrier final : private Timer
     }
 };
 
-void MainHostWindow::tryToQuitApplication()
+void HostWindow::tryToQuitApplication()
 {
     if (graphHolder->closeAnyOpenPluginWindows())
     {
@@ -445,7 +445,7 @@ void MainHostWindow::tryToQuitApplication()
         if (graphHolder->graph->saveDocument (PluginGraph::getDefaultGraphDocumentOnMobile()))
             releaseAndQuit();
        #else
-        SafePointer<MainHostWindow> parent { this };
+        SafePointer<HostWindow> parent { this };
         graphHolder->graph->saveIfNeededAndUserAgreesAsync ([parent, releaseAndQuit] (FileBasedDocument::SaveResult r)
         {
             if (parent == nullptr)
@@ -462,7 +462,7 @@ void MainHostWindow::tryToQuitApplication()
     JUCEApplication::quit();
 }
 
-void MainHostWindow::changeListenerCallback (ChangeBroadcaster* changed)
+void HostWindow::changeListenerCallback (ChangeBroadcaster* changed)
 {
     if (changed == &knownPluginList)
     {
@@ -488,7 +488,7 @@ void MainHostWindow::changeListenerCallback (ChangeBroadcaster* changed)
     }
 }
 
-StringArray MainHostWindow::getMenuBarNames()
+StringArray HostWindow::getMenuBarNames()
 {
     StringArray names;
     names.add ("File");
@@ -498,7 +498,7 @@ StringArray MainHostWindow::getMenuBarNames()
     return names;
 }
 
-PopupMenu MainHostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*menuName*/)
+PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*menuName*/)
 {
     PopupMenu menu;
 
@@ -567,7 +567,7 @@ PopupMenu MainHostWindow::getMenuForIndex (int topLevelMenuIndex, const String& 
     return menu;
 }
 
-void MainHostWindow::menuItemSelected (int menuItemID, int /*topLevelMenuIndex*/)
+void HostWindow::menuItemSelected (int menuItemID, int /*topLevelMenuIndex*/)
 {
     if (menuItemID == 250)
     {
@@ -586,7 +586,7 @@ void MainHostWindow::menuItemSelected (int menuItemID, int /*topLevelMenuIndex*/
         {
             if (auto* graph = graphHolder->graph.get())
             {
-                SafePointer<MainHostWindow> parent { this };
+                SafePointer<HostWindow> parent { this };
                 graph->saveIfNeededAndUserAgreesAsync ([parent, recentFiles, menuItemID] (FileBasedDocument::SaveResult r)
                 {
                     if (parent == nullptr)
@@ -619,13 +619,13 @@ void MainHostWindow::menuItemSelected (int menuItemID, int /*topLevelMenuIndex*/
     }
 }
 
-void MainHostWindow::menuBarActivated (bool isActivated)
+void HostWindow::menuBarActivated (bool isActivated)
 {
     if (isActivated && graphHolder != nullptr)
         Component::unfocusAllComponents();
 }
 
-void MainHostWindow::createPlugin (const PluginDescriptionAndPreference& desc, Point<int> pos)
+void HostWindow::createPlugin (const PluginDescriptionAndPreference& desc, Point<int> pos)
 {
     if (graphHolder != nullptr)
         graphHolder->createNewPlugin (desc, pos);
@@ -683,7 +683,7 @@ static void addToMenu (const KnownPluginList::PluginTree& tree,
     }
 }
 
-void MainHostWindow::addPluginsToMenu (PopupMenu& m)
+void HostWindow::addPluginsToMenu (PopupMenu& m)
 {
     if (graphHolder != nullptr)
     {
@@ -708,7 +708,7 @@ void MainHostWindow::addPluginsToMenu (PopupMenu& m)
     addToMenu (*tree, m, pluginDescriptions, pluginDescriptionsAndPreference);
 }
 
-std::optional<PluginDescriptionAndPreference> MainHostWindow::getChosenType (const int menuID) const
+std::optional<PluginDescriptionAndPreference> HostWindow::getChosenType (const int menuID) const
 {
     const auto internalIndex = menuID - 1;
 
@@ -723,13 +723,13 @@ std::optional<PluginDescriptionAndPreference> MainHostWindow::getChosenType (con
     return {};
 }
 
-//==============================================================================
-ApplicationCommandTarget* MainHostWindow::getNextCommandTarget()
+
+ApplicationCommandTarget* HostWindow::getNextCommandTarget()
 {
     return findFirstTargetParentComponent();
 }
 
-void MainHostWindow::getAllCommands (Array<CommandID>& commands)
+void HostWindow::getAllCommands (Array<CommandID>& commands)
 {
     // this returns the set of all commands that this target can perform..
     const CommandID ids[] = {
@@ -750,7 +750,7 @@ void MainHostWindow::getAllCommands (Array<CommandID>& commands)
     commands.addArray (ids, numElementsInArray (ids));
 }
 
-void MainHostWindow::getCommandInfo (const CommandID commandID, ApplicationCommandInfo& result)
+void HostWindow::getCommandInfo (const CommandID commandID, ApplicationCommandInfo& result)
 {
     const String category ("General");
 
@@ -812,7 +812,7 @@ void MainHostWindow::getCommandInfo (const CommandID commandID, ApplicationComma
     }
 }
 
-bool MainHostWindow::perform (const InvocationInfo& info)
+bool HostWindow::perform (const InvocationInfo& info)
 {
     switch (info.commandID)
     {
@@ -820,7 +820,7 @@ bool MainHostWindow::perform (const InvocationInfo& info)
     case CommandIDs::newFile:
         if (graphHolder != nullptr && graphHolder->graph != nullptr)
         {
-            SafePointer<MainHostWindow> parent { this };
+            SafePointer<HostWindow> parent { this };
             graphHolder->graph->saveIfNeededAndUserAgreesAsync ([parent] (FileBasedDocument::SaveResult r)
             {
                 if (parent == nullptr)
@@ -835,7 +835,7 @@ bool MainHostWindow::perform (const InvocationInfo& info)
     case CommandIDs::open:
          if (graphHolder != nullptr && graphHolder->graph != nullptr)
          {
-             SafePointer<MainHostWindow> parent { this };
+             SafePointer<HostWindow> parent { this };
              graphHolder->graph->saveIfNeededAndUserAgreesAsync ([parent] (FileBasedDocument::SaveResult r)
              {
                  if (parent == nullptr)
@@ -917,7 +917,7 @@ bool MainHostWindow::perform (const InvocationInfo& info)
     return true;
 }
 
-void MainHostWindow::showAudioSettings()
+void HostWindow::showAudioSettings()
 {
     auto* audioSettingsComp = new AudioDeviceSelectorComponent (deviceManager,
                                                                 0, 256,
@@ -937,7 +937,7 @@ void MainHostWindow::showAudioSettings()
     o.resizable                     = false;
 
      auto* w = o.create();
-     auto safeThis = SafePointer<MainHostWindow> (this);
+     auto safeThis = SafePointer<HostWindow> (this);
 
      w->enterModalState (true,
                          ModalCallbackFunction::create
@@ -954,24 +954,24 @@ void MainHostWindow::showAudioSettings()
                          }), true);
 }
 
-bool MainHostWindow::isInterestedInFileDrag (const StringArray&)
+bool HostWindow::isInterestedInFileDrag (const StringArray&)
 {
     return true;
 }
 
-void MainHostWindow::fileDragEnter (const StringArray&, int, int)
+void HostWindow::fileDragEnter (const StringArray&, int, int)
 {
 }
 
-void MainHostWindow::fileDragMove (const StringArray&, int, int)
+void HostWindow::fileDragMove (const StringArray&, int, int)
 {
 }
 
-void MainHostWindow::fileDragExit (const StringArray&)
+void HostWindow::fileDragExit (const StringArray&)
 {
 }
 
-void MainHostWindow::filesDropped (const StringArray& files, int x, int y)
+void HostWindow::filesDropped (const StringArray& files, int x, int y)
 {
     if (graphHolder != nullptr)
     {
@@ -982,7 +982,7 @@ void MainHostWindow::filesDropped (const StringArray& files, int x, int y)
         {
             if (auto* g = graphHolder->graph.get())
             {
-                SafePointer<MainHostWindow> parent;
+                SafePointer<HostWindow> parent;
                 g->saveIfNeededAndUserAgreesAsync ([parent, g, firstFile] (FileBasedDocument::SaveResult r)
                 {
                     if (parent == nullptr)
@@ -1008,7 +1008,7 @@ void MainHostWindow::filesDropped (const StringArray& files, int x, int y)
     }
 }
 
-bool MainHostWindow::isDoublePrecisionProcessingEnabled()
+bool HostWindow::isDoublePrecisionProcessingEnabled()
 {
     if (auto* props = getAppProperties().getUserSettings())
         return props->getBoolValue ("doublePrecisionProcessing", false);
@@ -1016,7 +1016,7 @@ bool MainHostWindow::isDoublePrecisionProcessingEnabled()
     return false;
 }
 
-bool MainHostWindow::isAutoScalePluginWindowsEnabled()
+bool HostWindow::isAutoScalePluginWindowsEnabled()
 {
     if (auto* props = getAppProperties().getUserSettings())
         return props->getBoolValue ("autoScalePluginWindows", false);
@@ -1024,13 +1024,13 @@ bool MainHostWindow::isAutoScalePluginWindowsEnabled()
     return false;
 }
 
-void MainHostWindow::updatePrecisionMenuItem (ApplicationCommandInfo& info)
+void HostWindow::updatePrecisionMenuItem (ApplicationCommandInfo& info)
 {
     info.setInfo ("Double Floating-Point Precision Rendering", {}, "General", 0);
     info.setTicked (isDoublePrecisionProcessingEnabled());
 }
 
-void MainHostWindow::updateAutoScaleMenuItem (ApplicationCommandInfo& info)
+void HostWindow::updateAutoScaleMenuItem (ApplicationCommandInfo& info)
 {
     info.setInfo ("Auto-Scale Plug-in Windows", {}, "General", 0);
     info.setTicked (isAutoScalePluginWindowsEnabled());

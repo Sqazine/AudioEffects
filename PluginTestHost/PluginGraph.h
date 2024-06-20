@@ -21,13 +21,11 @@
    DISCLAIMED.
 
   ==============================================================================
-*/
-
-#pragma once
+*/#pragma once
 
 #include "PluginWindow.h"
 
-//==============================================================================
+
 /** A type that encapsulates a PluginDescription and some preferences regarding
     how plugins of that description should be instantiated.
 */
@@ -51,7 +49,7 @@ struct PluginDescriptionAndPreference
     UseARA useARA = UseARA::no;
 };
 
-//==============================================================================
+
 /**
     A collection of plugins and some connections between them.
 */
@@ -60,11 +58,11 @@ class PluginGraph final : public FileBasedDocument,
                           private ChangeListener
 {
 public:
-    //==============================================================================
+   
     PluginGraph (AudioPluginFormatManager&, KnownPluginList&);
     ~PluginGraph() override;
 
-    //==============================================================================
+   
     using NodeID = AudioProcessorGraph::NodeID;
 
     void addPlugin (const PluginDescriptionAndPreference&, Point<double>);
@@ -74,25 +72,25 @@ public:
     void setNodePosition (NodeID, Point<double>);
     Point<double> getNodePosition (NodeID) const;
 
-    //==============================================================================
+   
     void clear();
 
     PluginWindow* getOrCreateWindowFor (AudioProcessorGraph::Node*, PluginWindow::Type);
     void closeCurrentlyOpenWindowsFor (AudioProcessorGraph::NodeID);
     bool closeAnyOpenPluginWindows();
 
-    //==============================================================================
+   
     void audioProcessorParameterChanged (AudioProcessor*, int, float) override {}
     void audioProcessorChanged (AudioProcessor*, const ChangeDetails&) override { changed(); }
 
-    //==============================================================================
+   
     std::unique_ptr<XmlElement> createXml() const;
     void restoreFromXml (const XmlElement&);
 
     static const char* getFilenameSuffix()      { return ".filtergraph"; }
     static const char* getFilenameWildcard()    { return "*.filtergraph"; }
 
-    //==============================================================================
+   
     void newDocument();
     String getDocumentTitle() override;
     Result loadDocument (const File& file) override;
@@ -102,11 +100,11 @@ public:
 
     static File getDefaultGraphDocumentOnMobile();
 
-    //==============================================================================
+   
     AudioProcessorGraph graph;
 
 private:
-    //==============================================================================
+   
     AudioPluginFormatManager& formatManager;
     KnownPluginList& knownPlugins;
     OwnedArray<PluginWindow> activePluginWindows;

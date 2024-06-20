@@ -23,10 +23,10 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
-#include "MainHostWindow.h"
+#include "JuceHeader.h"
+#include "HostWindow.h"
 #include "PluginGraph.h"
-#include "InternalPlugins.h"
+#include "InternalPluginFormat.h"
 #include "GraphEditorPanel.h"
 
 static std::unique_ptr<ScopedDPIAwarenessDisabler> makeDPIAwarenessDisablerForPlugin (const PluginDescription& desc)
@@ -35,7 +35,7 @@ static std::unique_ptr<ScopedDPIAwarenessDisabler> makeDPIAwarenessDisablerForPl
                                         : nullptr;
 }
 
-//==============================================================================
+
 PluginGraph::PluginGraph (AudioPluginFormatManager& fm, KnownPluginList& kpl)
     : FileBasedDocument (getFilenameSuffix(),
                          getFilenameWildcard(),
@@ -60,7 +60,7 @@ PluginGraph::NodeID PluginGraph::getNextUID() noexcept
     return PluginGraph::NodeID (++(lastUID.uid));
 }
 
-//==============================================================================
+
 void PluginGraph::changeListenerCallback (ChangeBroadcaster*)
 {
     changed();
@@ -137,7 +137,7 @@ Point<double> PluginGraph::getNodePosition (NodeID nodeID) const
     return {};
 }
 
-//==============================================================================
+
 void PluginGraph::clear()
 {
     closeAnyOpenPluginWindows();
@@ -184,7 +184,7 @@ bool PluginGraph::closeAnyOpenPluginWindows()
     return ! wasEmpty;
 }
 
-//==============================================================================
+
 String PluginGraph::getDocumentTitle()
 {
     if (! getFile().exists())
@@ -266,7 +266,7 @@ void PluginGraph::setLastDocumentOpened (const File& file)
         ->setValue ("recentFilterGraphFiles", recentFiles.toString());
 }
 
-//==============================================================================
+
 static void readBusLayoutFromXml (AudioProcessor::BusesLayout& busesLayout, AudioProcessor& plugin,
                                   const XmlElement& xml, bool isInput)
 {
@@ -307,7 +307,7 @@ static void readBusLayoutFromXml (AudioProcessor::BusesLayout& busesLayout, Audi
     }
 }
 
-//==============================================================================
+
 static XmlElement* createBusLayoutXml (const AudioProcessor::BusesLayout& layout, const bool isInput)
 {
     auto& buses = isInput ? layout.inputBuses

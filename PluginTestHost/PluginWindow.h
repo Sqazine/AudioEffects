@@ -21,11 +21,9 @@
    DISCLAIMED.
 
   ==============================================================================
-*/
+*/#pragma once
 
-#pragma once
-
-#include "IOConfigurationWindow.h"
+#include "IOConfigWindow.h"
 
 inline String getFormatSuffix (const AudioProcessor* plugin)
 {
@@ -141,7 +139,7 @@ private:
     AudioProcessor& audioProc;
 };
 
-//==============================================================================
+
 /**
     A desktop window containing a plugin's GUI.
 */
@@ -291,7 +289,7 @@ private:
             return new ProgramAudioProcessorEditor (processor);
 
         if (type == PluginWindow::Type::audioIO)
-            return new IOConfigurationWindow (processor);
+            return new IOConfigWindow (processor);
 
         if (type == PluginWindow::Type::debug)
             return new PluginDebugWindow (processor);
@@ -315,7 +313,7 @@ private:
         }
     }
 
-    //==============================================================================
+   
     struct ProgramAudioProcessorEditor final : public AudioProcessorEditor
     {
         explicit ProgramAudioProcessorEditor (AudioProcessor& p)

@@ -2,12 +2,12 @@
 
 #include "JuceHeader.h"
 
-class AudioPlayerPluginAudioProcessor : public juce::AudioProcessor
+class AudioPlayerAudioProcessor : public juce::AudioProcessor
 {
 public:
 
-	AudioPlayerPluginAudioProcessor();
-	~AudioPlayerPluginAudioProcessor() override;
+	AudioPlayerAudioProcessor();
+	~AudioPlayerAudioProcessor() override;
 
 
 	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -51,5 +51,5 @@ public:
 private:
 	std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPlayerPluginAudioProcessor)
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPlayerAudioProcessor)
 };
