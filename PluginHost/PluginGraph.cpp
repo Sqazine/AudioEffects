@@ -1,33 +1,10 @@
-/*
-  ==============================================================================
 
-   This file is part of the JUCE library.
-   Copyright (c) 2022 - Raw Material Software Limited
-
-   JUCE is an open source library subject to commercial or open-source
-   licensing.
-
-   By using JUCE, you agree to the terms of both the JUCE 7 End-User License
-   Agreement and JUCE Privacy Policy.
-
-   End User License Agreement: www.juce.com/juce-7-licence
-   Privacy Policy: www.juce.com/juce-privacy-policy
-
-   Or: You may also use this code under the terms of the GPL v3 (see
-   www.gnu.org/licenses).
-
-   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
-   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
-   DISCLAIMED.
-
-  ==============================================================================
-*/
 
 #include "JuceHeader.h"
 #include "HostWindow.h"
-#include "PluginGraph.h"
-#include "InternalPluginFormat.h"
 #include "GraphEditorPanel.h"
+#include "PluginGraph.h"
+#include "PluginInstanceProxy.h"
 
 static std::unique_ptr<ScopedDPIAwarenessDisabler> makeDPIAwarenessDisablerForPlugin (const PluginDescription& desc)
 {
@@ -80,23 +57,22 @@ AudioProcessorGraph::Node::Ptr PluginGraph::getNodeForName (const String& name) 
     return nullptr;
 }
 
-void PluginGraph::addPlugin (const PluginDescriptionAndPreference& desc, Point<double> pos)
+void PluginGraph::addPlugin (const PluginDescription& desc, Point<double> pos)
 {
-    std::shared_ptr<ScopedDPIAwarenessDisabler> dpiDisabler = makeDPIAwarenessDisablerForPlugin (desc.pluginDescription);
+    std::shared_ptr<ScopedDPIAwarenessDisabler> dpiDisabler = makeDPIAwarenessDisablerForPlugin (desc);
 
-    formatManager.createPluginInstanceAsync (desc.pluginDescription,
+    formatManager.createPluginInstanceAsync (desc,
                                              graph.getSampleRate(),
                                              graph.getBlockSize(),
-                                             [this, pos, dpiDisabler, useARA = desc.useARA] (std::unique_ptr<AudioPluginInstance> instance, const String& error)
+                                             [this, pos, dpiDisabler] (std::unique_ptr<AudioPluginInstance> instance, const String& error)
                                              {
-                                                 addPluginCallback (std::move (instance), error, pos, useARA);
+                                                 addPluginCallback (std::move (instance), error, pos);
                                              });
 }
 
 void PluginGraph::addPluginCallback (std::unique_ptr<AudioPluginInstance> instance,
                                      const String& error,
-                                     Point<double> pos,
-                                     PluginDescriptionAndPreference::UseARA useARA)
+                                     Point<double> pos)
 {
     if (instance == nullptr)
     {
@@ -113,7 +89,6 @@ void PluginGraph::addPluginCallback (std::unique_ptr<AudioPluginInstance> instan
         {
             node->properties.set ("x", pos.x);
             node->properties.set ("y", pos.y);
-            node->properties.set ("useARA", useARA == PluginDescriptionAndPreference::UseARA::yes);
             changed();
         }
     }
@@ -200,14 +175,14 @@ void PluginGraph::newDocument()
 
     graph.removeChangeListener (this);
 
-    InternalPluginFormat internalFormat;
+    PluginInstanceFormat format;
 
-    jassert (internalFormat.getAllTypes().size() > 3);
+    jassert (format.getAllTypes().size() > 3);
 
-    addPlugin (PluginDescriptionAndPreference { internalFormat.getAllTypes()[0] }, { 0.5,  0.1 });
-    addPlugin (PluginDescriptionAndPreference { internalFormat.getAllTypes()[1] }, { 0.25, 0.1 });
-    addPlugin (PluginDescriptionAndPreference { internalFormat.getAllTypes()[2] }, { 0.5,  0.9 });
-    addPlugin (PluginDescriptionAndPreference { internalFormat.getAllTypes()[3] }, { 0.25, 0.9 });
+    addPlugin (format.getAllTypes()[0], { 0.5,  0.1 });
+    addPlugin (format.getAllTypes()[1], { 0.25, 0.1 });
+    addPlugin (format.getAllTypes()[2], { 0.5,  0.9 });
+    addPlugin (format.getAllTypes()[3], { 0.25, 0.9 });
 
     MessageManager::callAsync ([this]
     {
@@ -377,28 +352,17 @@ static XmlElement* createNodeXml (AudioProcessorGraph::Node* const node) noexcep
 
 void PluginGraph::createNodeFromXml (const XmlElement& xml)
 {
-    PluginDescriptionAndPreference pd;
-    const auto nodeUsesARA = xml.getBoolAttribute ("useARA");
-
-    for (auto* e : xml.getChildIterator())
-    {
-        if (pd.pluginDescription.loadFromXml (*e))
-        {
-            pd.useARA = nodeUsesARA ? PluginDescriptionAndPreference::UseARA::yes
-                                    : PluginDescriptionAndPreference::UseARA::no;
-            break;
-        }
-    }
+    PluginDescription pd;
 
     auto createInstanceWithFallback = [&]() -> std::unique_ptr<AudioPluginInstance>
     {
-        auto createInstance = [this] (const PluginDescriptionAndPreference& description) -> std::unique_ptr<AudioPluginInstance>
+        auto createInstance = [this] (const PluginDescription& description) -> std::unique_ptr<AudioPluginInstance>
         {
             String errorMessage;
 
-            auto localDpiDisabler = makeDPIAwarenessDisablerForPlugin (description.pluginDescription);
+            auto localDpiDisabler = makeDPIAwarenessDisablerForPlugin (description);
 
-            auto instance = formatManager.createPluginInstance (description.pluginDescription,
+            auto instance = formatManager.createPluginInstance (description,
                                                                 graph.getSampleRate(),
                                                                 graph.getBlockSize(),
                                                                 errorMessage);
@@ -411,19 +375,19 @@ void PluginGraph::createNodeFromXml (const XmlElement& xml)
 
         const auto allFormats = formatManager.getFormats();
         const auto matchingFormat = std::find_if (allFormats.begin(), allFormats.end(),
-                                                  [&] (const AudioPluginFormat* f) { return f->getName() == pd.pluginDescription.pluginFormatName; });
+                                                  [&] (const AudioPluginFormat* f) { return f->getName() == pd.pluginFormatName; });
 
         if (matchingFormat == allFormats.end())
             return nullptr;
 
         const auto plugins = knownPlugins.getTypesForFormat (**matchingFormat);
         const auto matchingPlugin = std::find_if (plugins.begin(), plugins.end(),
-                                                  [&] (const PluginDescription& desc) { return pd.pluginDescription.uniqueId == desc.uniqueId; });
+                                                  [&] (const PluginDescription& desc) { return pd.uniqueId == desc.uniqueId; });
 
         if (matchingPlugin == plugins.end())
             return nullptr;
 
-        return createInstance (PluginDescriptionAndPreference { *matchingPlugin });
+        return createInstance (*matchingPlugin);
     };
 
     if (auto instance = createInstanceWithFallback())

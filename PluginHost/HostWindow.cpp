@@ -25,7 +25,7 @@
 
 #include "JuceHeader.h"
 #include "HostWindow.h"
-#include "InternalPluginFormat.h"
+#include "PluginInstanceFormat.h"
 
 constexpr const char* scanModeKey = "pluginScanMode";
 
@@ -306,7 +306,7 @@ HostWindow::HostWindow()
                       DocumentWindow::allButtons)
 {
     formatManager.addDefaultFormats();
-    formatManager.addFormat (new InternalPluginFormat());
+    formatManager.addFormat (new PluginInstanceFormat());
 
     auto safeThis = SafePointer<HostWindow> (this);
     RuntimePermissions::request (RuntimePermissions::recordAudio,
@@ -336,13 +336,13 @@ HostWindow::HostWindow()
 
     setVisible (true);
 
-    InternalPluginFormat internalFormat;
-    internalTypes = internalFormat.getAllTypes();
+    PluginInstanceFormat internalFormat;
+    pluginTypes = internalFormat.getAllTypes();
 
     if (auto savedPluginList = getAppProperties().getUserSettings()->getXmlValue ("pluginList"))
         knownPluginList.recreateFromXml (*savedPluginList);
 
-    for (auto& t : internalTypes)
+    for (auto& t : pluginTypes)
         knownPluginList.addType (t);
 
     pluginSortMethod = (KnownPluginList::SortMethod) getAppProperties().getUserSettings()
@@ -494,7 +494,6 @@ StringArray HostWindow::getMenuBarNames()
     names.add ("File");
     names.add ("Plugins");
     names.add ("Options");
-    names.add ("Windows");
     return names;
 }
 
@@ -505,10 +504,8 @@ PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*me
     if (topLevelMenuIndex == 0)
     {
         // "File" menu
-       #if ! (JUCE_IOS || JUCE_ANDROID)
         menu.addCommandItem (&getCommandManager(), CommandIDs::newFile);
         menu.addCommandItem (&getCommandManager(), CommandIDs::open);
-       #endif
 
         RecentlyOpenedFilesList recentFiles;
         recentFiles.restoreFromString (getAppProperties().getUserSettings()
@@ -518,10 +515,8 @@ PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*me
         recentFiles.createPopupMenuItems (recentFilesMenu, 100, true, true);
         menu.addSubMenu ("Open recent file", recentFilesMenu);
 
-       #if ! (JUCE_IOS || JUCE_ANDROID)
         menu.addCommandItem (&getCommandManager(), CommandIDs::save);
         menu.addCommandItem (&getCommandManager(), CommandIDs::saveAs);
-       #endif
 
         menu.addSeparator();
         menu.addCommandItem (&getCommandManager(), StandardApplicationCommandIDs::quit);
@@ -538,7 +533,6 @@ PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*me
     else if (topLevelMenuIndex == 2)
     {
         // "Options" menu
-
         menu.addCommandItem (&getCommandManager(), CommandIDs::showPluginListEditor);
 
         PopupMenu sortTypeMenu;
@@ -555,13 +549,6 @@ PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*me
 
         if (autoScaleOptionAvailable)
             menu.addCommandItem (&getCommandManager(), CommandIDs::autoScalePluginWindows);
-
-        menu.addSeparator();
-        menu.addCommandItem (&getCommandManager(), CommandIDs::aboutBox);
-    }
-    else if (topLevelMenuIndex == 3)
-    {
-        menu.addCommandItem (&getCommandManager(), CommandIDs::allWindowsForward);
     }
 
     return menu;
@@ -625,7 +612,7 @@ void HostWindow::menuBarActivated (bool isActivated)
         Component::unfocusAllComponents();
 }
 
-void HostWindow::createPlugin (const PluginDescriptionAndPreference& desc, Point<int> pos)
+void HostWindow::createPlugin (const PluginDescription& desc, Point<int> pos)
 {
     if (graphHolder != nullptr)
         graphHolder->createNewPlugin (desc, pos);
@@ -647,7 +634,7 @@ static constexpr int menuIDBase = 0x324503f4;
 static void addToMenu (const KnownPluginList::PluginTree& tree,
                        PopupMenu& m,
                        const Array<PluginDescription>& allPlugins,
-                       Array<PluginDescriptionAndPreference>& addedPlugins)
+                       Array<PluginDescription>& addedPlugins)
 {
     for (auto* sub : tree.subFolders)
     {
@@ -671,15 +658,7 @@ static void addToMenu (const KnownPluginList::PluginTree& tree,
         if (containsDuplicateNames (tree.plugins, name))
             name << " (" << plugin.pluginFormatName << ')';
 
-        addPlugin (PluginDescriptionAndPreference { plugin, PluginDescriptionAndPreference::UseARA::no }, name);
-
-       #if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
-        if (plugin.hasARAExtension)
-        {
-            name << " (ARA)";
-            addPlugin (PluginDescriptionAndPreference { plugin }, name);
-        }
-       #endif
+        addPlugin (PluginDescription { plugin }, name);
     }
 }
 
@@ -689,7 +668,7 @@ void HostWindow::addPluginsToMenu (PopupMenu& m)
     {
         int i = 0;
 
-        for (auto& t : internalTypes)
+        for (auto& t : pluginTypes)
             m.addItem (++i, t.name + " (" + t.pluginFormatName + ")");
     }
 
@@ -700,25 +679,25 @@ void HostWindow::addPluginsToMenu (PopupMenu& m)
     // This avoids showing the internal types again later on in the list
     pluginDescriptions.removeIf ([] (PluginDescription& desc)
     {
-        return desc.pluginFormatName == InternalPluginFormat::getIdentifier();
+        return desc.pluginFormatName == PluginInstanceFormat::getIdentifier();
     });
 
     auto tree = KnownPluginList::createTree (pluginDescriptions, pluginSortMethod);
-    pluginDescriptionsAndPreference = {};
-    addToMenu (*tree, m, pluginDescriptions, pluginDescriptionsAndPreference);
+    pluginDescriptionArray = {};
+    addToMenu (*tree, m, pluginDescriptions, pluginDescriptionArray);
 }
 
-std::optional<PluginDescriptionAndPreference> HostWindow::getChosenType (const int menuID) const
+std::optional<PluginDescription> HostWindow::getChosenType (const int menuID) const
 {
     const auto internalIndex = menuID - 1;
 
-    if (isPositiveAndBelow (internalIndex, internalTypes.size()))
-        return PluginDescriptionAndPreference { internalTypes[(size_t) internalIndex] };
+    if (isPositiveAndBelow (internalIndex, pluginTypes.size()))
+        return PluginDescription{ pluginTypes[(size_t) internalIndex] };
 
     const auto externalIndex = menuID - menuIDBase;
 
-    if (isPositiveAndBelow (externalIndex, pluginDescriptionsAndPreference.size()))
-        return pluginDescriptionsAndPreference[externalIndex];
+    if (isPositiveAndBelow (externalIndex, pluginDescriptionArray.size()))
+        return pluginDescriptionArray[externalIndex];
 
     return {};
 }
@@ -733,17 +712,13 @@ void HostWindow::getAllCommands (Array<CommandID>& commands)
 {
     // this returns the set of all commands that this target can perform..
     const CommandID ids[] = {
-                             #if ! (JUCE_IOS || JUCE_ANDROID)
                               CommandIDs::newFile,
                               CommandIDs::open,
                               CommandIDs::save,
                               CommandIDs::saveAs,
-                             #endif
                               CommandIDs::showPluginListEditor,
                               CommandIDs::showAudioSettings,
                               CommandIDs::toggleDoublePrecision,
-                              CommandIDs::aboutBox,
-                              CommandIDs::allWindowsForward,
                               CommandIDs::autoScalePluginWindows
                             };
 
@@ -756,7 +731,6 @@ void HostWindow::getCommandInfo (const CommandID commandID, ApplicationCommandIn
 
     switch (commandID)
     {
-   #if ! (JUCE_IOS || JUCE_ANDROID)
     case CommandIDs::newFile:
         result.setInfo ("New", "Creates a new filter graph file", category, 0);
         result.defaultKeypresses.add (KeyPress ('n', ModifierKeys::commandModifier, 0));
@@ -778,7 +752,6 @@ void HostWindow::getCommandInfo (const CommandID commandID, ApplicationCommandIn
                         category, 0);
         result.defaultKeypresses.add (KeyPress ('s', ModifierKeys::shiftModifier | ModifierKeys::commandModifier, 0));
         break;
-   #endif
 
     case CommandIDs::showPluginListEditor:
         result.setInfo ("Edit the List of Available Plug-ins...", {}, category, 0);
@@ -793,16 +766,6 @@ void HostWindow::getCommandInfo (const CommandID commandID, ApplicationCommandIn
     case CommandIDs::toggleDoublePrecision:
         updatePrecisionMenuItem (result);
         break;
-
-    case CommandIDs::aboutBox:
-        result.setInfo ("About...", {}, category, 0);
-        break;
-
-    case CommandIDs::allWindowsForward:
-        result.setInfo ("All Windows Forward", "Bring all plug-in windows forward", category, 0);
-        result.addDefaultKeypress ('w', ModifierKeys::commandModifier);
-        break;
-
     case CommandIDs::autoScalePluginWindows:
         updateAutoScaleMenuItem (result);
         break;
@@ -816,7 +779,6 @@ bool HostWindow::perform (const InvocationInfo& info)
 {
     switch (info.commandID)
     {
-   #if ! (JUCE_IOS || JUCE_ANDROID)
     case CommandIDs::newFile:
         if (graphHolder != nullptr && graphHolder->graph != nullptr)
         {
@@ -856,7 +818,6 @@ bool HostWindow::perform (const InvocationInfo& info)
         if (graphHolder != nullptr && graphHolder->graph != nullptr)
             graphHolder->graph->saveAsAsync ({}, true, true, true, nullptr);
         break;
-   #endif
 
     case CommandIDs::showPluginListEditor:
         if (pluginListWindow == nullptr)
@@ -895,21 +856,6 @@ bool HostWindow::perform (const InvocationInfo& info)
             menuItemsChanged();
         }
         break;
-
-    case CommandIDs::aboutBox:
-        // TODO
-        break;
-
-    case CommandIDs::allWindowsForward:
-    {
-        auto& desktop = Desktop::getInstance();
-
-        for (int i = 0; i < desktop.getNumComponents(); ++i)
-            desktop.getComponent (i)->toBehind (this);
-
-        break;
-    }
-
     default:
         return false;
     }
@@ -1003,7 +949,7 @@ void HostWindow::filesDropped (const StringArray& files, int x, int y)
 
             for (int i = 0; i < jmin (5, typesFound.size()); ++i)
                 if (auto* desc = typesFound.getUnchecked (i))
-                    createPlugin (PluginDescriptionAndPreference { *desc }, pos);
+                    createPlugin (PluginDescription{ *desc }, pos);
         }
     }
 }

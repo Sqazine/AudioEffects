@@ -1,31 +1,8 @@
-/*
-  ==============================================================================
 
-   This file is part of the JUCE library.
-   Copyright (c) 2022 - Raw Material Software Limited
-
-   JUCE is an open source library subject to commercial or open-source
-   licensing.
-
-   By using JUCE, you agree to the terms of both the JUCE 7 End-User License
-   Agreement and JUCE Privacy Policy.
-
-   End User License Agreement: www.juce.com/juce-7-licence
-   Privacy Policy: www.juce.com/juce-privacy-policy
-
-   Or: You may also use this code under the terms of the GPL v3 (see
-   www.gnu.org/licenses).
-
-   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
-   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
-   DISCLAIMED.
-
-  ==============================================================================
-*/
 
 #include "JuceHeader.h"
 #include "GraphEditorPanel.h"
-#include "InternalPluginFormat.h"
+#include "PluginInstanceFormat.h"
 #include "HostWindow.h"
 
 
@@ -396,14 +373,6 @@ struct GraphEditorPanel::PluginComponent final : public Component,
         return {};
     }
 
-    bool isNodeUsingARA() const
-    {
-        if (auto node = graph.graph.getNodeForId (pluginID))
-            return node->properties["useARA"];
-
-        return false;
-    }
-
     void showPopupMenu()
     {
         menu.reset (new PopupMenu);
@@ -425,12 +394,6 @@ struct GraphEditorPanel::PluginComponent final : public Component,
         menu->addItem ("Show all parameters", [this] { showWindow (PluginWindow::Type::generic); });
         menu->addItem ("Show debug log", [this] { showWindow (PluginWindow::Type::debug); });
 
-       #if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
-        if (auto* instance = dynamic_cast<AudioPluginInstance*> (getProcessor()))
-            if (instance->getPluginDescription().hasARAExtension && isNodeUsingARA())
-                menu->addItem ("Show ARA host controls", [this] { showWindow (PluginWindow::Type::araHost); });
-       #endif
-
         if (autoScaleOptionAvailable)
             addPluginAutoScaleOptionsSubMenu (dynamic_cast<AudioPluginInstance*> (getProcessor()), *menu);
 
@@ -438,11 +401,9 @@ struct GraphEditorPanel::PluginComponent final : public Component,
         menu->addItem ("Configure Audio I/O", [this] { showWindow (PluginWindow::Type::audioIO); });
         menu->addItem ("Test state save/load", [this] { testStateSaveLoad(); });
 
-       #if ! JUCE_IOS && ! JUCE_ANDROID
         menu->addSeparator();
         menu->addItem ("Save plugin state", [this] { savePluginState(); });
         menu->addItem ("Load plugin state", [this] { loadPluginState(); });
-       #endif
 
         menu->showMenuAsync ({});
     }
@@ -796,7 +757,7 @@ void GraphEditorPanel::mouseDrag (const MouseEvent& e)
         stopTimer();
 }
 
-void GraphEditorPanel::createNewPlugin (const PluginDescriptionAndPreference& desc, Point<int> position)
+void GraphEditorPanel::createNewPlugin (const PluginDescription& desc, Point<int> position)
 {
     graph.addPlugin (desc, position.toDouble() / Point<double> ((double) getWidth(), (double) getHeight()));
 }
@@ -1292,7 +1253,7 @@ void GraphDocumentComponent::resized()
     checkAvailableWidth();
 }
 
-void GraphDocumentComponent::createNewPlugin (const PluginDescriptionAndPreference& desc, Point<int> pos)
+void GraphDocumentComponent::createNewPlugin (const PluginDescription& desc, Point<int> pos)
 {
     graphPanel->createNewPlugin (desc, pos);
 }
@@ -1334,7 +1295,7 @@ void GraphDocumentComponent::itemDropped (const SourceDetails& details)
     // must be a valid index!
     jassert (isPositiveAndBelow (pluginTypeIndex, pluginList.getNumTypes()));
 
-    createNewPlugin (PluginDescriptionAndPreference { pluginList.getTypes()[pluginTypeIndex] },
+    createNewPlugin (PluginDescription { pluginList.getTypes()[pluginTypeIndex] },
                      details.localPosition);
 }
 

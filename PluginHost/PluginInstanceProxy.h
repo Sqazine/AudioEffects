@@ -1,10 +1,10 @@
 #pragma once
 #include "JuceHeader.h"
-#include "InternalPluginFormat.h"
-class InternalPlugin final : public AudioPluginInstance
+#include "PluginInstanceFormat.h"
+class PluginInstanceProxy final : public AudioPluginInstance
 {
 public:
-    explicit InternalPlugin (std::unique_ptr<AudioProcessor> innerIn)
+    explicit PluginInstanceProxy (std::unique_ptr<AudioProcessor> innerIn)
         : inner (std::move (innerIn))
     {
         jassert (inner != nullptr);
@@ -75,7 +75,7 @@ private:
 
         descr.name              = identifier;
         descr.descriptiveName   = identifier;
-        descr.pluginFormatName  = InternalPluginFormat::getIdentifier();
+        descr.pluginFormatName  = PluginInstanceFormat::getIdentifier();
         descr.category          = (registerAsGenerator ? (acceptsMidi ? "Synth" : "Generator") : "Effect");
         descr.manufacturerName  = "JUCE";
         descr.version           = ProjectInfo::versionString;
@@ -103,7 +103,7 @@ private:
     std::unique_ptr<AudioProcessor> inner;
 
    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InternalPlugin)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginInstanceProxy)
 };
 //
 //
@@ -283,62 +283,62 @@ private:
 //};
 //
 //
-//class ReverbPlugin final : public AudioProcessor
-//{
-//public:
-//    ReverbPlugin()
-//        : AudioProcessor (BusesProperties().withInput  ("Input",  AudioChannelSet::stereo())
-//                                           .withOutput ("Output", AudioChannelSet::stereo()))
-//    {}
-//
-//    static String getIdentifier()
-//    {
-//        return "Reverb";
-//    }
-//
-//    void prepareToPlay (double newSampleRate, int) override
-//    {
-//        reverb.setSampleRate (newSampleRate);
-//    }
-//
-//    void reset() override
-//    {
-//        reverb.reset();
-//    }
-//
-//    void releaseResources() override {}
-//
-//    void processBlock (AudioBuffer<float>& buffer, MidiBuffer&) override
-//    {
-//        auto numChannels = buffer.getNumChannels();
-//
-//        if (numChannels == 1)
-//            reverb.processMono (buffer.getWritePointer (0), buffer.getNumSamples());
-//        else
-//            reverb.processStereo (buffer.getWritePointer (0),
-//                                  buffer.getWritePointer (1),
-//                                  buffer.getNumSamples());
-//
-//        for (int ch = 2; ch < numChannels; ++ch)
-//            buffer.clear (ch, 0, buffer.getNumSamples());
-//    }
-//
-//    using AudioProcessor::processBlock;
-//
-//    const String getName() const override                                           { return getIdentifier(); }
-//    double getTailLengthSeconds() const override                                    { return 0.0; }
-//    bool acceptsMidi() const override                                               { return false; }
-//    bool producesMidi() const override                                              { return false; }
-//    AudioProcessorEditor* createEditor() override                                   { return nullptr; }
-//    bool hasEditor() const override                                                 { return false; }
-//    int getNumPrograms() override                                                   { return 1; }
-//    int getCurrentProgram() override                                                { return 0; }
-//    void setCurrentProgram (int) override                                           {}
-//    const String getProgramName (int) override                                      { return {}; }
-//    void changeProgramName (int, const String&) override                            {}
-//    void getStateInformation (juce::MemoryBlock&) override                          {}
-//    void setStateInformation (const void*, int) override                            {}
-//
-//private:
-//    Reverb reverb;
-//};
+class ReverbPlugin final : public AudioProcessor
+{
+public:
+    ReverbPlugin()
+        : AudioProcessor(BusesProperties().withInput("Input", AudioChannelSet::stereo())
+            .withOutput("Output", AudioChannelSet::stereo()))
+    {}
+
+    static String getIdentifier()
+    {
+        return "Reverb";
+    }
+
+    void prepareToPlay(double newSampleRate, int) override
+    {
+        reverb.setSampleRate(newSampleRate);
+    }
+
+    void reset() override
+    {
+        reverb.reset();
+    }
+
+    void releaseResources() override {}
+
+    void processBlock(AudioBuffer<float>& buffer, MidiBuffer&) override
+    {
+        auto numChannels = buffer.getNumChannels();
+
+        if (numChannels == 1)
+            reverb.processMono(buffer.getWritePointer(0), buffer.getNumSamples());
+        else
+            reverb.processStereo(buffer.getWritePointer(0),
+                buffer.getWritePointer(1),
+                buffer.getNumSamples());
+
+        for (int ch = 2; ch < numChannels; ++ch)
+            buffer.clear(ch, 0, buffer.getNumSamples());
+    }
+
+    using AudioProcessor::processBlock;
+
+    const String getName() const override { return getIdentifier(); }
+    double getTailLengthSeconds() const override { return 0.0; }
+    bool acceptsMidi() const override { return false; }
+    bool producesMidi() const override { return false; }
+    AudioProcessorEditor* createEditor() override { return nullptr; }
+    bool hasEditor() const override { return false; }
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram(int) override {}
+    const String getProgramName(int) override { return {}; }
+    void changeProgramName(int, const String&) override {}
+    void getStateInformation(juce::MemoryBlock&) override {}
+    void setStateInformation(const void*, int) override {}
+
+private:
+    Reverb reverb;
+};
