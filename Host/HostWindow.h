@@ -12,9 +12,8 @@ namespace CommandIDs
     static const int showAudioSettings      = 0x30200;
 }
 
-
-inline ApplicationProperties& getAppProperties() { return *getApp().appProperties; }
-inline ApplicationCommandManager& getCommandManager() { return getApp().commandManager; }
+ApplicationProperties& getAppProperties();
+ApplicationCommandManager& getCommandManager();
 
 inline bool isOnTouchDevice()
 {

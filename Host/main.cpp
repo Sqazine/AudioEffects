@@ -210,7 +210,7 @@ public:
         return true;
     }
 
-    const String getApplicationName() override       { return "PluginHost"; }
+    const String getApplicationName() override       { return "Host"; }
     const String getApplicationVersion() override    { return ProjectInfo::versionString; }
     bool moreThanOneInstanceAllowed() override       { return true; }
 
@@ -223,6 +223,8 @@ private:
 };
 
 static PluginHostApp& getApp()                    { return *dynamic_cast<PluginHostApp*> (JUCEApplication::getInstance()); }
+ApplicationProperties& getAppProperties() { return *getApp().appProperties; }
+ApplicationCommandManager& getCommandManager() { return getApp().commandManager; }
 
 // This kicks the whole thing off..
 START_JUCE_APPLICATION (PluginHostApp)
