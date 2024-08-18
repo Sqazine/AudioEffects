@@ -247,6 +247,6 @@ void DistortionAudioProcessor::setStateInformation(const void *data, int sizeInB
 #ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
-    return new DelayAudioProcessor();
+    return new DistortionAudioProcessor();
 }
 #endif

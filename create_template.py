@@ -39,6 +39,7 @@ target_compile_definitions(${PLUGIN_NAME} PUBLIC
                             JUCE_VST3_CAN_REPLACE_VST2=0)
 
 target_compile_definitions(${PLUGIN_NAME}_VST3 PRIVATE EXPORT_CREATE_FILTER_FUNCTION)
+target_sources(${PLUGIN_NAME}_VST3 PRIVATE ${SRC} ${COMMON_SRC})
 target_include_directories(${PLUGIN_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
 
 target_link_libraries(${PLUGIN_NAME}
