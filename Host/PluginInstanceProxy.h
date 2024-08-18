@@ -1,5 +1,5 @@
 #pragma once
-#include "JuceHeader.h"
+#include <JuceHeader.h>
 #include "PluginInstanceFormat.h"
 class PluginInstanceProxy final : public AudioPluginInstance
 {

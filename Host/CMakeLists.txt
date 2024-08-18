@@ -1,10 +1,12 @@
 set(EXE_NAME Host)
 
-juce_add_gui_app(${EXE_NAME} MICROPHONE_PERMISSION_ENABLED TRUE)
+juce_add_gui_app(${EXE_NAME} 
+                MICROPHONE_PERMISSION_ENABLED TRUE
+                ICON_BIG  "${CMAKE_SOURCE_DIR}/JUCE/extras/AudioPluginHost/Source/JUCEAppIcon.png")
 
 juce_generate_juce_header(${EXE_NAME})
 
-file(GLOB SRC "*.h" "*.cpp")
+file(GLOB SRC "*.h" "*.cpp" "*.inl")
 source_group("${EXE_NAME}" FILES ${SRC})
 
 target_sources(${EXE_NAME} PRIVATE ${SRC})
@@ -44,3 +46,9 @@ target_link_libraries(${EXE_NAME} PRIVATE
 
 set_property(TARGET ${EXE_NAME}_rc_lib PROPERTY FOLDER ${EXE_NAME})
 set_property(TARGET ${EXE_NAME} PROPERTY FOLDER ${EXE_NAME})
+
+target_include_directories(${EXE_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
+
+include(CmakeLinkLibraries.cmake)
+
+target_link_libraries(${EXE_NAME} PRIVATE ${AUDIO_EFFECT_LIBS})

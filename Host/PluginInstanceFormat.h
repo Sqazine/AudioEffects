@@ -1,6 +1,6 @@
 #pragma once
 
-#include "JuceHeader.h"
+#include <JuceHeader.h>
 #include "PluginGraph.h"
 
 class PluginInstanceFormat final : public AudioPluginFormat

@@ -1,9 +1,11 @@
 
 
-#include "JuceHeader.h"
+#include <JuceHeader.h>
 #include "PluginInstanceFormat.h"
 #include "PluginInstanceProxy.h"
 #include "PluginGraph.h"
+
+#include "PluginInstanceIncludedHeader.inl"
 
 PluginInstanceFormat::PluginFactory::PluginFactory(const std::initializer_list<Constructor>& constructorsIn)
     : constructors (constructorsIn),
@@ -34,25 +36,7 @@ std::unique_ptr<AudioPluginInstance> PluginInstanceFormat::PluginFactory::create
 
 PluginInstanceFormat::PluginInstanceFormat()
     : factory {
-        [] { return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::audioInputNode); },
-        [] { return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::midiInputNode); },
-        [] { return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::audioOutputNode); },
-        [] { return std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor> (AudioProcessorGraph::AudioGraphIOProcessor::midiOutputNode); },
-
-           [] { return std::make_unique<PluginInstanceProxy> (std::make_unique<ReverbPlugin>()); },
-        /*   [] { return std::make_unique<PluginInstanceProxy> (std::make_unique<SineWaveSynth>()); },
-           [] { return std::make_unique<PluginInstanceProxy> (std::make_unique<ReverbPlugin>()); },
-
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<AUv3SynthProcessor>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<Arpeggiator>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<DspModulePluginDemoAudioProcessor>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<GainProcessor>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<JuceDemoPluginAudioProcessor>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<MidiLoggerPluginDemoProcessor>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<MultiOutSynth>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<NoiseGate>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<SamplerAudioProcessor>()); },
-         [] { return std::make_unique<PluginInstanceProxy>(std::make_unique<SurroundProcessor>()); }*/
+     #include "PluginInstanceFactoryCreation.inl" 
     }
 {
 }

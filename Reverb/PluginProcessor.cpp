@@ -196,7 +196,9 @@ void ReverbAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 
 
 // This creates new instances of the plugin..
+#ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
 	return new ReverbAudioProcessor();
 }
+#endif

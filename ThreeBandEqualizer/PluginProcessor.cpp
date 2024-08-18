@@ -3,7 +3,7 @@
 #include "PluginProcessor.h"
 
 
-_3BandEqualizerAudioProcessor::_3BandEqualizerAudioProcessor()
+ThreeBandEqualizerAudioProcessor::ThreeBandEqualizerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
 #if ! JucePlugin_IsMidiEffect
@@ -18,17 +18,17 @@ _3BandEqualizerAudioProcessor::_3BandEqualizerAudioProcessor()
 {
 }
 
-_3BandEqualizerAudioProcessor::~_3BandEqualizerAudioProcessor()
+ThreeBandEqualizerAudioProcessor::~ThreeBandEqualizerAudioProcessor()
 {
 }
 
 
-const juce::String _3BandEqualizerAudioProcessor::getName() const
+const juce::String ThreeBandEqualizerAudioProcessor::getName() const
 {
 	return JucePlugin_Name;
 }
 
-bool _3BandEqualizerAudioProcessor::acceptsMidi() const
+bool ThreeBandEqualizerAudioProcessor::acceptsMidi() const
 {
 #if JucePlugin_WantsMidiInput
 	return true;
@@ -37,7 +37,7 @@ bool _3BandEqualizerAudioProcessor::acceptsMidi() const
 #endif
 }
 
-bool _3BandEqualizerAudioProcessor::producesMidi() const
+bool ThreeBandEqualizerAudioProcessor::producesMidi() const
 {
 #if JucePlugin_ProducesMidiOutput
 	return true;
@@ -46,7 +46,7 @@ bool _3BandEqualizerAudioProcessor::producesMidi() const
 #endif
 }
 
-bool _3BandEqualizerAudioProcessor::isMidiEffect() const
+bool ThreeBandEqualizerAudioProcessor::isMidiEffect() const
 {
 #if JucePlugin_IsMidiEffect
 	return true;
@@ -55,37 +55,37 @@ bool _3BandEqualizerAudioProcessor::isMidiEffect() const
 #endif
 }
 
-double _3BandEqualizerAudioProcessor::getTailLengthSeconds() const
+double ThreeBandEqualizerAudioProcessor::getTailLengthSeconds() const
 {
 	return 0.0;
 }
 
-int _3BandEqualizerAudioProcessor::getNumPrograms()
+int ThreeBandEqualizerAudioProcessor::getNumPrograms()
 {
 	return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
 	// so this should be at least 1, even if you're not really implementing programs.
 }
 
-int _3BandEqualizerAudioProcessor::getCurrentProgram()
+int ThreeBandEqualizerAudioProcessor::getCurrentProgram()
 {
 	return 0;
 }
 
-void _3BandEqualizerAudioProcessor::setCurrentProgram(int index)
+void ThreeBandEqualizerAudioProcessor::setCurrentProgram(int index)
 {
 }
 
-const juce::String _3BandEqualizerAudioProcessor::getProgramName(int index)
+const juce::String ThreeBandEqualizerAudioProcessor::getProgramName(int index)
 {
 	return {};
 }
 
-void _3BandEqualizerAudioProcessor::changeProgramName(int index, const juce::String& newName)
+void ThreeBandEqualizerAudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
 }
 
 
-void _3BandEqualizerAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void ThreeBandEqualizerAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	juce::dsp::ProcessSpec spec;
 	spec.maximumBlockSize = samplesPerBlock;
@@ -115,14 +115,14 @@ void _3BandEqualizerAudioProcessor::prepareToPlay(double sampleRate, int samples
 	updateCutFilter(rightHighCut, highCutCoefficient, (Slope)chainSettings.highCutSlope);
 }
 
-void _3BandEqualizerAudioProcessor::releaseResources()
+void ThreeBandEqualizerAudioProcessor::releaseResources()
 {
 	// When playback stops, you can use this as an opportunity to free up any
 	// spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool _3BandEqualizerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool ThreeBandEqualizerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
 #if JucePlugin_IsMidiEffect
 	juce::ignoreUnused(layouts);
@@ -147,7 +147,7 @@ bool _3BandEqualizerAudioProcessor::isBusesLayoutSupported(const BusesLayout& la
 }
 #endif
 
-void _3BandEqualizerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void ThreeBandEqualizerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 	juce::ScopedNoDenormals noDenormals;
 	auto totalNumInputChannels = getTotalNumInputChannels();
@@ -195,31 +195,31 @@ void _3BandEqualizerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
 }
 
 
-bool _3BandEqualizerAudioProcessor::hasEditor() const
+bool ThreeBandEqualizerAudioProcessor::hasEditor() const
 {
 	return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* _3BandEqualizerAudioProcessor::createEditor()
+juce::AudioProcessorEditor* ThreeBandEqualizerAudioProcessor::createEditor()
 {
 	return new juce::GenericAudioProcessorEditor(*this);
 }
 
 
-void _3BandEqualizerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+void ThreeBandEqualizerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
 	// You should use this method to store your parameters in the memory block.
 	// You could do that either as raw data, or use the XML or ValueTree classes
 	// as intermediaries to make it easy to save and load complex data.
 }
 
-void _3BandEqualizerAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+void ThreeBandEqualizerAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
 	// You should use this method to restore your parameters from this memory block,
 	// whose contents will have been created by the getStateInformation() call.
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout _3BandEqualizerAudioProcessor::createParameterLayout()
+juce::AudioProcessorValueTreeState::ParameterLayout ThreeBandEqualizerAudioProcessor::createParameterLayout()
 {
 	juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
@@ -244,20 +244,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout _3BandEqualizerAudioProcesso
 	return layout;
 }
 
-void _3BandEqualizerAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings)
+void ThreeBandEqualizerAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings)
 {
 	auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakChainInDecibels));
 
 	*leftChain.get<ChainIndex::Peak>().coefficients = *peakCoefficients;
 	*rightChain.get<ChainIndex::Peak>().coefficients = *peakCoefficients;
-}
-
-
-
-// This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-	return new _3BandEqualizerAudioProcessor();
 }
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
@@ -272,3 +264,11 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 	settings.highCutSlope = apvts.getRawParameterValue("HighCutSlope")->load();
 	return settings;
 }
+
+// This creates new instances of the plugin..
+#ifdef EXPORT_CREATE_FILTER_FUNCTION
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+	return new ThreeBandEqualizerAudioProcessor();
+}
+#endif

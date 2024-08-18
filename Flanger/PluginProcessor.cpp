@@ -316,8 +316,9 @@ float FlangerAudioProcessor::Lfo(float phase, int32_t waveform)
 
 
 // This creates new instances of the plugin..
+#ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
 	return new FlangerAudioProcessor();
 }
-
+#endif

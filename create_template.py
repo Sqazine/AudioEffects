@@ -8,7 +8,7 @@ def cmake_file_content():
     return '''set(PLUGIN_NAME '''+template_name+''')
 juce_add_plugin(${PLUGIN_NAME}
     # VERSION ...                               # Set this if the plugin version is different to the project version
-    # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
+    ICON_BIG  "${CMAKE_SOURCE_DIR}/JUCE/extras/AudioPluginHost/Source/JUCEAppIcon.png"
     # ICON_SMALL ...
     # COMPANY_NAME ...                          # Specify the name of the plugin's author
     # IS_SYNTH TRUE/FALSE                       # Is this a synth or an effect?
@@ -19,21 +19,27 @@ juce_add_plugin(${PLUGIN_NAME}
     PLUGIN_MANUFACTURER_CODE Sqaz               # A four-character manufacturer id with at least one upper-case character
     PLUGIN_CODE Sqaz                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
-    FORMATS VST3 Standalone 
+    FORMATS VST3
     VST3_AUTO_MANIFEST FALSE
     PRODUCT_NAME "${PLUGIN_NAME}") 
 
 juce_generate_juce_header(${PLUGIN_NAME})
 
-file(GLOB_RECURSE SRC "*.h" "*.cpp")
-source_group("${PLUGIN_NAME}" FILES ${SRC})
 
-target_sources(${PLUGIN_NAME} PRIVATE ${SRC})
+file(GLOB_RECURSE SRC "*.h" "*.cpp" "*.inl")
+file(GLOB_RECURSE COMMON_SRC "${CMAKE_SOURCE_DIR}/Common/*.h" "${CMAKE_SOURCE_DIR}/Common/*.cpp" "${CMAKE_SOURCE_DIR}/Common/*.inl")
+source_group("${PLUGIN_NAME}" FILES ${SRC})
+source_group("Common" FILES ${COMMON_SRC})
+
+target_sources(${PLUGIN_NAME} PRIVATE ${SRC} ${COMMON_SRC})
 
 target_compile_definitions(${PLUGIN_NAME} PUBLIC
                             JUCE_WEB_BROWSER=0  
                             JUCE_USE_CURL=0     
                             JUCE_VST3_CAN_REPLACE_VST2=0)
+
+target_compile_definitions(${PLUGIN_NAME}_VST3 PRIVATE EXPORT_CREATE_FILTER_FUNCTION)
+target_include_directories(${PLUGIN_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
 
 target_link_libraries(${PLUGIN_NAME}
     PRIVATE
@@ -267,10 +273,13 @@ void '''+template_name+'''AudioProcessor::setStateInformation (const void* data,
 
 
 // This creates new instances of the plugin..
+#ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new '''+template_name+'''AudioProcessor();
-}'''
+}
+#endif
+'''
 
 def plugin_editor_hpp_file_content():
     return '''#pragma once
@@ -381,6 +390,38 @@ def append_major_cmake_file():
         file.write("\nadd_subdirectory("+template_name+")")
         file.close()
 
+def append_plugin_instance_factory_file():
+    global isSuccessfully
+    if isSuccessfully == True:
+        file=open("Host/PluginInstanceFactoryCreation.inl","a")
+        file.write("\n[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<"+template_name+"AudioProcessor>()); },")
+        file.close()
+
+def append_plugin_instance_header_file():
+    global isSuccessfully
+    if isSuccessfully == True:
+        file=open("Host/PluginInstanceIncludedHeader.inl","a")
+        file.write("\n#include \""+template_name+"/PluginProcessor.h\"")
+        file.close()
+
+
+def append_cmake_link_library_file():
+    global isSuccessfully
+    if isSuccessfully == True:
+        file=open("Host/CMakeLinkLibraries.cmake","r+",encoding="utf-8")
+
+        lines = file.readlines()
+        lines.pop()
+        lines.append("\t"+template_name+"\n")
+        lines.append(")")
+
+        file.seek(0)
+        file.truncate()
+        
+        file.writelines(lines)
+        file.flush()
+        file.close()
+
 
 def print_usage():
     print("python3 create_template [template_name],such as:python3 create_template Delay")
@@ -399,4 +440,8 @@ if __name__ == "__main__":
     create_plugin_editor_hpp_file()
     create_plugin_editor_cpp_file()
     append_major_cmake_file()
-    
+
+    append_plugin_instance_header_file()
+    append_plugin_instance_factory_file()    
+    append_cmake_link_library_file()
+

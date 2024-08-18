@@ -1,9 +1,6 @@
 #pragma once
 
-#include "JuceHeader.h"
-
-
-
+#include <JuceHeader.h>
 
 enum ChainIndex
 {
@@ -33,15 +30,15 @@ struct ChainSettings
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
-class _3BandEqualizerAudioProcessor : public juce::AudioProcessor
+class ThreeBandEqualizerAudioProcessor : public juce::AudioProcessor
 #if JucePlugin_Enable_ARA
 	, public juce::AudioProcessorARAExtension
 #endif
 {
 public:
 	
-	_3BandEqualizerAudioProcessor();
-	~_3BandEqualizerAudioProcessor() override;
+	ThreeBandEqualizerAudioProcessor();
+	~ThreeBandEqualizerAudioProcessor() override;
 
 	
 	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -93,11 +90,11 @@ private:
 	juce::AudioProcessorValueTreeState apvts;
 
 	
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(_3BandEqualizerAudioProcessor)
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ThreeBandEqualizerAudioProcessor)
 };
 
 template<typename ChainType, typename CoefficientType>
-inline void _3BandEqualizerAudioProcessor::updateCutFilter(ChainType& leftLowCut, const CoefficientType& cutCoefficients, const Slope& lowCutSlope)
+inline void ThreeBandEqualizerAudioProcessor::updateCutFilter(ChainType& leftLowCut, const CoefficientType& cutCoefficients, const Slope& lowCutSlope)
 {
 	leftLowCut.template setBypassed<0>(true);
 	leftLowCut.template setBypassed<1>(true);

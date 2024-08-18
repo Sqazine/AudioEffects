@@ -225,7 +225,9 @@ void SimpleEQAudioProcessor::setStateInformation(const void* data, int sizeInByt
 
 
 // This creates new instances of the plugin..
+#ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
 	return new SimpleEQAudioProcessor();
 }
+#endif

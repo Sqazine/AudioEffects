@@ -1,6 +1,6 @@
 
 
-#include "JuceHeader.h"
+#include <JuceHeader.h>
 #include "HostWindow.h"
 #include "GraphEditorPanel.h"
 #include "PluginGraph.h"
