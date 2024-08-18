@@ -49,6 +49,6 @@ set_property(TARGET ${EXE_NAME} PROPERTY FOLDER ${EXE_NAME})
 
 target_include_directories(${EXE_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
 
-include(CmakeLinkLibraries.cmake)
+include(CMakeLinkLibraries.cmake)
 
 target_link_libraries(${EXE_NAME} PRIVATE ${AUDIO_EFFECT_LIBS})

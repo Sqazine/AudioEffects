@@ -18,7 +18,5 @@ cmake --build .
 ## Create a new plugin
 ```sh
 install python3
-python3 create_template.py [plugin name],like:
-python3 create_template.py PingPongDelay
-
+python3 create_plugin.py [plugin name],like: python3 create_plugin.py PingPongDelay
 ```
