@@ -21,8 +21,8 @@ FlangerAudioProcessor::FlangerAudioProcessor()
 	mFeedback(apvts, "Feedback", "", 0.0f, 1.0f, 1.0f),
 	mInverted(apvts, "Inverted mode", "", false, [](float value) {return value * (-2.0f) + 1.0f; }),
 	mFrequency(apvts, "LFO Frequency", "Hz", 0.05f, 2.0f, 0.2f),
-	mWaveForm(apvts, "LFO waveform", "", gWaveformItemsUI, SINE),
-	mInterpolation(apvts, "Interpolation", "", gInterpolationItemsUI, LINEAR),
+	mWaveForm(apvts, "LFO waveform", "", mWaveformItemsUI, WaveformIndex::SINE),
+	mInterpolation(apvts, "Interpolation", "", mInterpolationItemsUI, InterpolationIndex::LINEAR),
 	mStereo(apvts, "Stereo", "")
 
 {

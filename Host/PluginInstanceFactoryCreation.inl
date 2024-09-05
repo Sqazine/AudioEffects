@@ -15,17 +15,4 @@
 [] { return std::make_unique<PluginInstanceProxy> (std::make_unique<SimpleDistortionAudioProcessor>()); },
 [] { return std::make_unique<PluginInstanceProxy> (std::make_unique<SimpleEQAudioProcessor>()); },
 [] { return std::make_unique<PluginInstanceProxy> (std::make_unique<ThreeBandEqualizerAudioProcessor>()); },
-/* 
-[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<SineWaveSynth>()); },
-[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<ReverbPlugin>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<AUv3SynthProcessor>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<Arpeggiator>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<DspModulePluginDemoAudioProcessor>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<GainProcessor>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<JuceDemoPluginAudioProcessor>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<MidiLoggerPluginDemoProcessor>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<MultiOutSynth>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<NoiseGate>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<SamplerAudioProcessor>()); },
-[] { return std::make_unique<PluginInstanceProxy>(std::make_unique<SurroundProcessor>()); }
-*/
+[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<ChorusAudioProcessor>()); },

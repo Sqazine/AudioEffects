@@ -10,3 +10,4 @@
 #include "SimpleDistortion/PluginProcessor.h"
 #include "SimpleEQ/PluginProcessor.h"
 #include "ThreeBandEqualizer/PluginProcessor.h"
+#include "Chorus/PluginProcessor.h"

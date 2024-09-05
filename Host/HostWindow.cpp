@@ -2,7 +2,6 @@
 #include "HostWindow.h"
 #include "PluginInstanceFormat.h"
 #include "HostPluginScanner.h"
-#include "HostPluginListWindow.h"
 
 HostWindow::HostWindow()
     : DocumentWindow (JUCEApplication::getInstance()->getApplicationName(),
@@ -76,7 +75,6 @@ HostWindow::HostWindow()
 
 HostWindow::~HostWindow()
 {
-    pluginListWindow = nullptr;
     knownPluginList.removeChangeListener (this);
 
     if (auto* g = graphHolder->graph.get())
@@ -197,7 +195,6 @@ StringArray HostWindow::getMenuBarNames()
     StringArray names;
     names.add ("File");
     names.add ("Plugins");
-    names.add ("Options");
     return names;
 }
 
@@ -234,23 +231,6 @@ PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*me
         menu.addSeparator();
         menu.addItem (250, "Delete All Plug-ins");
     }
-    else if (topLevelMenuIndex == 2)
-    {
-        // "Options" menu
-        menu.addCommandItem (&getCommandManager(), CommandIDs::showPluginListEditor);
-
-        PopupMenu sortTypeMenu;
-        sortTypeMenu.addItem (200, "List Plug-ins in Default Order",      true, pluginSortMethod == KnownPluginList::defaultOrder);
-        sortTypeMenu.addItem (201, "List Plug-ins in Alphabetical Order", true, pluginSortMethod == KnownPluginList::sortAlphabetically);
-        sortTypeMenu.addItem (202, "List Plug-ins by Category",           true, pluginSortMethod == KnownPluginList::sortByCategory);
-        sortTypeMenu.addItem (203, "List Plug-ins by Manufacturer",       true, pluginSortMethod == KnownPluginList::sortByManufacturer);
-        sortTypeMenu.addItem (204, "List Plug-ins Based on the Directory Structure", true, pluginSortMethod == KnownPluginList::sortByFileSystemLocation);
-        menu.addSubMenu ("Plug-in Menu Type", sortTypeMenu);
-
-        menu.addCommandItem (&getCommandManager(), CommandIDs::showAudioSettings);
-
-    }
-
     return menu;
 }
 
@@ -416,7 +396,6 @@ void HostWindow::getAllCommands (Array<CommandID>& commands)
                               CommandIDs::open,
                               CommandIDs::save,
                               CommandIDs::saveAs,
-                              CommandIDs::showPluginListEditor,
                               CommandIDs::showAudioSettings
                             };
 
@@ -449,11 +428,6 @@ void HostWindow::getCommandInfo (const CommandID commandID, ApplicationCommandIn
                         "Saves a copy of the current graph to a file",
                         category, 0);
         result.defaultKeypresses.add (KeyPress ('s', ModifierKeys::shiftModifier | ModifierKeys::commandModifier, 0));
-        break;
-
-    case CommandIDs::showPluginListEditor:
-        result.setInfo ("Edit the List of Available Plug-ins...", {}, category, 0);
-        result.addDefaultKeypress ('p', ModifierKeys::commandModifier);
         break;
 
     case CommandIDs::showAudioSettings:
@@ -507,13 +481,6 @@ bool HostWindow::perform (const InvocationInfo& info)
     case CommandIDs::saveAs:
         if (graphHolder != nullptr && graphHolder->graph != nullptr)
             graphHolder->graph->saveAsAsync ({}, true, true, true, nullptr);
-        break;
-
-    case CommandIDs::showPluginListEditor:
-        if (pluginListWindow == nullptr)
-            pluginListWindow.reset(new HostPluginListWindow(*this, formatManager));
-        else
-            pluginListWindow->show();
         break;
 
     case CommandIDs::showAudioSettings:

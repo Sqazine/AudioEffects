@@ -10,7 +10,7 @@ public:
     {
     }
 
-    void updateValue(float value)
+    void UpdateValue(float value)
     {
         if (callback != nullptr)
             setCurrentAndTargetValue(callback(value));
@@ -20,7 +20,7 @@ public:
 
     void parameterChanged(const juce::String &parameterID, float newValue) override
     {
-        updateValue(newValue);
+        UpdateValue(newValue);
     }
 
     juce::AudioProcessorValueTreeState &apvts;

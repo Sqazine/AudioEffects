@@ -33,7 +33,7 @@ public:
             { return text.getFloatValue(); }));
 
         apvts.addParameterListener(paramID, this);
-        updateValue(defaultValue);
+        UpdateValue(defaultValue);
     }
 
     const juce::String &paramName;

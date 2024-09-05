@@ -8,7 +8,6 @@ namespace CommandIDs
     static const int save                   = 0x30001;
     static const int saveAs                 = 0x30002;
     static const int newFile                = 0x30003;
-    static const int showPluginListEditor   = 0x30100;
     static const int showAudioSettings      = 0x30200;
 }
 
@@ -67,8 +66,7 @@ public:
 private:
    
     void showAudioSettings();
-    
-    friend class HostPluginListWindow;
+
    
     AudioDeviceManager deviceManager;
     AudioPluginFormatManager formatManager;
@@ -77,8 +75,6 @@ private:
     KnownPluginList knownPluginList;
     KnownPluginList::SortMethod pluginSortMethod;
     Array<PluginDescription> pluginDescriptionArray;
-
-    std::unique_ptr<HostPluginListWindow> pluginListWindow;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostWindow)
 };

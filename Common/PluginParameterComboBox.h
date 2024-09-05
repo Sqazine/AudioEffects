@@ -1,9 +1,9 @@
 #pragma once
 #include "PluginParameter.h"
-class PluginParameterCombox : public PluginParameter
+class PluginParameterComboBox : public PluginParameter
 {
 public:
-    PluginParameterCombox(juce::AudioProcessorValueTreeState &apvts,
+    PluginParameterComboBox(juce::AudioProcessorValueTreeState &apvts,
                           const juce::String &paramName,
                           const juce::String &label,
                           const juce::StringArray &items,
@@ -28,7 +28,7 @@ public:
             { return items.indexOf(text); }));
 
         apvts.addParameterListener(paramID, this);
-        updateValue(defaultChoice);
+        UpdateValue(defaultChoice);
     }
 
     const juce::String &paramName;

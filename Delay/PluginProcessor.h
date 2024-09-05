@@ -52,7 +52,6 @@ private:
 	int32_t mDelayBufferChannels;
 	int32_t mDelayWritePositions;
 
-
 	juce::AudioProcessorValueTreeState mDelayParameters;
 	PluginParameterSlider mDelayParamDelayTime;
 	PluginParameterSlider mDelayParamFeedback;

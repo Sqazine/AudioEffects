@@ -9,7 +9,6 @@ public:
 	AudioPlayerAudioProcessor();
 	~AudioPlayerAudioProcessor() override;
 
-
 	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
 	void releaseResources() override;
 
@@ -18,7 +17,6 @@ public:
 #endif
 
 	void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-
 
 	juce::AudioProcessorEditor* createEditor() override;
 	bool hasEditor() const override;
@@ -37,19 +35,18 @@ public:
 	const juce::String getProgramName(int index) override;
 	void changeProgramName(int index, const juce::String& newName) override;
 
-
 	void getStateInformation(juce::MemoryBlock& destData) override;
 	void setStateInformation(const void* data, int sizeInBytes) override;
 
-	void loadFile(juce::File& file);
+	void LoadFile(juce::File& file);
 
-	juce::AudioTransportSource transportSource;
-	juce::AudioFormatManager formatManager;
+	juce::AudioTransportSource mTransportSource;
+	juce::AudioFormatManager mFormatManager;
 
-	juce::AudioProcessorValueTreeState parameters;
+	juce::AudioProcessorValueTreeState mApvts;
 
 private:
-	std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+	std::unique_ptr<juce::AudioFormatReaderSource> mReaderSource;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPlayerAudioProcessor)
 };

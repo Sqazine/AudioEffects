@@ -11,4 +11,5 @@ set(AUDIO_EFFECT_LIBS
     SimpleDistortion
     SimpleEQ
     ThreeBandEqualizer
+	Chorus
 )

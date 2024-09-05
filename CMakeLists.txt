@@ -28,3 +28,5 @@ add_subdirectory(PingPongDelay)
 add_subdirectory(Reverb)
 add_subdirectory(SimpleDistortion)
 add_subdirectory(SimpleEQ)
+
+add_subdirectory(Chorus)

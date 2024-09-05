@@ -3,8 +3,17 @@
 
 
 AudioPlayerAudioProcessor::AudioPlayerAudioProcessor()
-	: AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-	parameters(*this, nullptr, juce::Identifier("AudioPlayerParams"),
+	#ifndef JucePlugin_PreferredChannelConfigurations
+	: AudioProcessor(BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+		.withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+		.withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+	),
+#endif
+	mApvts(*this, nullptr, juce::Identifier("AudioPlayerParams"),
 		{
 			std::make_unique<juce::AudioParameterFloat>("Gain","Gain",juce::NormalisableRange<float>(0.0f,1.0f,0.01f),0.5f,"",juce::AudioProcessorParameter::genericParameter,
 			[](float value,int)
@@ -26,12 +35,12 @@ AudioPlayerAudioProcessor::AudioPlayerAudioProcessor()
 				})
 		})
 {
-	formatManager.registerBasicFormats();
+	mFormatManager.registerBasicFormats();
 }
 
 AudioPlayerAudioProcessor::~AudioPlayerAudioProcessor()
 {
-	transportSource.setSource(nullptr);
+	mTransportSource.setSource(nullptr);
 }
 
 
@@ -99,13 +108,13 @@ void AudioPlayerAudioProcessor::changeProgramName(int index, const juce::String&
 
 void AudioPlayerAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-	transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+	mTransportSource.prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void AudioPlayerAudioProcessor::releaseResources()
 {
-	transportSource.releaseResources();
-	transportSource.setSource(nullptr);
+	mTransportSource.releaseResources();
+	mTransportSource.setSource(nullptr);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -136,14 +145,12 @@ bool AudioPlayerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layout
 
 void AudioPlayerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-	/*auto gainLength = parameters.getParameterRange("Gain").getRange().getLength();
-	auto volumeLength = parameters.getParameterRange("Volume").getRange().getLength();*/
-	auto gain = parameters.getRawParameterValue("Gain")->load();
-	auto volume = parameters.getRawParameterValue("Volume")->load();
+	auto gain = mApvts.getRawParameterValue("Gain")->load();
+	auto volume = mApvts.getRawParameterValue("Volume")->load();
 
 	juce::AudioSourceChannelInfo info(&buffer, 0, buffer.getNumSamples());
-	transportSource.getNextAudioBlock(info);
-	transportSource.setGain(gain);
+	mTransportSource.getNextAudioBlock(info);
+	mTransportSource.setGain(gain);
 
 	auto numSamples = buffer.getNumSamples();
 	for (int32_t i = 0; i < buffer.getNumChannels(); ++i)
@@ -171,7 +178,7 @@ juce::AudioProcessorEditor* AudioPlayerAudioProcessor::createEditor()
 
 void AudioPlayerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-	auto state = parameters.copyState();
+	auto state = mApvts.copyState();
 	std::unique_ptr<juce::XmlElement> xml(state.createXml());
 	copyXmlToBinary(*xml, destData);
 }
@@ -181,19 +188,19 @@ void AudioPlayerAudioProcessor::setStateInformation(const void* data, int sizeIn
 	std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
 	if (xmlState.get() != nullptr)
-		if (xmlState->hasTagName(parameters.state.getType()))
-			parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+		if (xmlState->hasTagName(mApvts.state.getType()))
+			mApvts.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
-void AudioPlayerAudioProcessor::loadFile(juce::File& file)
+void AudioPlayerAudioProcessor::LoadFile(juce::File& file)
 {
-	auto reader = formatManager.createReaderFor(file);
+	auto reader = mFormatManager.createReaderFor(file);
 	if (reader)
 	{
 		auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-		transportSource.stop();
-		transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
-		readerSource.reset(newSource.release());
+		mTransportSource.stop();
+		mTransportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+		mReaderSource.reset(newSource.release());
 	}
 }
 

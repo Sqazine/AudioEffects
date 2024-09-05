@@ -26,7 +26,7 @@ public:
             { return toggleStates.indexOf(text); }));
 
         apvts.addParameterListener(paramID, this);
-        updateValue(defaultState);
+        UpdateValue(defaultState);
     }
 
     const juce::String &paramName;

@@ -5,7 +5,7 @@ AudioPlayerAudioProcessorEditor::AudioPlayerAudioProcessorEditor(AudioPlayerAudi
 	: AudioProcessorEditor(&p),
 	audioProcessor(p),
 	thumbnailCache(5),
-	thumbnail(512, p.formatManager, thumbnailCache)
+	thumbnail(512, p.mFormatManager, thumbnailCache)
 {
 	setSize(300, 300);
 
@@ -13,7 +13,7 @@ AudioPlayerAudioProcessorEditor::AudioPlayerAudioProcessorEditor(AudioPlayerAudi
 
 	thumbnail.addChangeListener(this);
 
-	audioProcessor.transportSource.addChangeListener(this);
+	audioProcessor.mTransportSource.addChangeListener(this);
 
 	addAndMakeVisible(&openButton);
 	openButton.setButtonText("open...");
@@ -24,7 +24,7 @@ AudioPlayerAudioProcessorEditor::AudioPlayerAudioProcessorEditor(AudioPlayerAudi
 			auto file = fc.getResult();
 		if (file != juce::File{})
 		{
-			audioProcessor.loadFile(file);
+			audioProcessor.LoadFile(file);
 			playOrStopButton.setEnabled(true);
 			playOrStopButton.setButtonText("play");
 			playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
@@ -39,28 +39,28 @@ AudioPlayerAudioProcessorEditor::AudioPlayerAudioProcessorEditor(AudioPlayerAudi
 	playOrStopButton.setEnabled(false);
 	playOrStopButton.onClick = [this]
 	{
-		if (audioProcessor.transportSource.isPlaying())
+		if (audioProcessor.mTransportSource.isPlaying())
 		{
 			playOrStopButton.setButtonText("play");
 			playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-			audioProcessor.transportSource.stop();
+			audioProcessor.mTransportSource.stop();
 		}
 		else
 		{
 			playOrStopButton.setButtonText("stop");
 			playOrStopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
-			audioProcessor.transportSource.start();
+			audioProcessor.mTransportSource.start();
 		}
 	};
 
 
 	addAndMakeVisible(&gainSlider);
 	gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);	
-	gainAttachment.reset(new SliderAttachment(audioProcessor.parameters, "Gain", gainSlider));
+	gainAttachment.reset(new SliderAttachment(audioProcessor.mApvts, "Gain", gainSlider));
 
 	addAndMakeVisible(&volumeSlider);
 	volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-	volumeAttachment.reset(new SliderAttachment(audioProcessor.parameters, "Volume", volumeSlider));
+	volumeAttachment.reset(new SliderAttachment(audioProcessor.mApvts, "Volume", volumeSlider));
 }
 
 AudioPlayerAudioProcessorEditor::~AudioPlayerAudioProcessorEditor()
@@ -95,7 +95,7 @@ void AudioPlayerAudioProcessorEditor::paint(juce::Graphics& g)
 
 		g.setColour(juce::Colours::green);
 
-		auto audioPosition = (float)audioProcessor.transportSource.getCurrentPosition();
+		auto audioPosition = (float)audioProcessor.mTransportSource.getCurrentPosition();
 		auto drawPosition = (audioPosition / audioLength) * (float)thumbnailBounds.getWidth() + (float)thumbnailBounds.getX();
 
 		g.drawLine(drawPosition, (float)thumbnailBounds.getY(), drawPosition, (float)thumbnailBounds.getBottom(), 2.0f);
