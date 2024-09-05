@@ -63,18 +63,14 @@ public:
 
     std::unique_ptr<GraphDocumentComponent> graphHolder;
 
-private:
-   
+private:   
     void showAudioSettings();
 
-   
     AudioDeviceManager deviceManager;
     AudioPluginFormatManager formatManager;
 
     std::vector<PluginDescription> pluginTypes;
     KnownPluginList knownPluginList;
-    KnownPluginList::SortMethod pluginSortMethod;
-    Array<PluginDescription> pluginDescriptionArray;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostWindow)
 };

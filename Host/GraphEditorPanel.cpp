@@ -334,7 +334,7 @@ struct GraphEditorPanel::PluginComponent final : public Component,
             h = 100;
 
         setSize (w, h);
-        setName (processor.getName() + formatSuffix);
+        setName (processor.getName());
 
         {
             auto p = graph.getNodePosition (pluginID);
@@ -505,7 +505,6 @@ struct GraphEditorPanel::PluginComponent final : public Component,
     DropShadowEffect shadow;
     std::unique_ptr<PopupMenu> menu;
     std::unique_ptr<FileChooser> fileChooser;
-    const String formatSuffix = getFormatSuffix (getProcessor());
 };
 
 

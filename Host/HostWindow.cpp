@@ -1,7 +1,6 @@
 #include <JuceHeader.h>
 #include "HostWindow.h"
 #include "PluginInstanceFormat.h"
-#include "HostPluginScanner.h"
 
 HostWindow::HostWindow()
     : DocumentWindow (JUCEApplication::getInstance()->getApplicationName(),
@@ -27,7 +26,7 @@ HostWindow::HostWindow()
     centreWithSize (800, 600);
    #endif
 
-    knownPluginList.setCustomScanner (std::make_unique<HostPluginScanner>());
+    knownPluginList.setCustomScanner (nullptr);
 
     graphHolder.reset (new GraphDocumentComponent (formatManager, deviceManager, knownPluginList));
 
@@ -47,9 +46,6 @@ HostWindow::HostWindow()
 
     for (auto& t : pluginTypes)
         knownPluginList.addType (t);
-
-    pluginSortMethod = (KnownPluginList::SortMethod) getAppProperties().getUserSettings()
-                            ->getIntValue ("pluginSortMethod", KnownPluginList::sortByManufacturer);
 
     knownPluginList.addChangeListener (this);
 
@@ -230,6 +226,8 @@ PopupMenu HostWindow::getMenuForIndex (int topLevelMenuIndex, const String& /*me
         menu.addSubMenu ("Create Plug-in", pluginsMenu);
         menu.addSeparator();
         menu.addItem (250, "Delete All Plug-ins");
+        menu.addSeparator();
+        menu.addCommandItem (&getCommandManager(), CommandIDs::showAudioSettings);
     }
     return menu;
 }
@@ -266,18 +264,6 @@ void HostWindow::menuItemSelected (int menuItemID, int /*topLevelMenuIndex*/)
         }
     }
    #endif
-    else if (menuItemID >= 200 && menuItemID < 210)
-    {
-             if (menuItemID == 200)     pluginSortMethod = KnownPluginList::defaultOrder;
-        else if (menuItemID == 201)     pluginSortMethod = KnownPluginList::sortAlphabetically;
-        else if (menuItemID == 202)     pluginSortMethod = KnownPluginList::sortByCategory;
-        else if (menuItemID == 203)     pluginSortMethod = KnownPluginList::sortByManufacturer;
-        else if (menuItemID == 204)     pluginSortMethod = KnownPluginList::sortByFileSystemLocation;
-
-        getAppProperties().getUserSettings()->setValue ("pluginSortMethod", (int) pluginSortMethod);
-
-        menuItemsChanged();
-    }
     else
     {
         if (const auto chosen = getChosenType (menuItemID))
@@ -349,22 +335,8 @@ void HostWindow::addPluginsToMenu (PopupMenu& m)
         int i = 0;
 
         for (auto& t : pluginTypes)
-            m.addItem (++i, t.name + " (" + t.pluginFormatName + ")");
+            m.addItem (++i, t.name);
     }
-
-    m.addSeparator();
-
-    auto pluginDescriptions = knownPluginList.getTypes();
-
-    // This avoids showing the internal types again later on in the list
-    pluginDescriptions.removeIf ([] (PluginDescription& desc)
-    {
-        return desc.pluginFormatName == PluginInstanceFormat::getIdentifier();
-    });
-
-    auto tree = KnownPluginList::createTree (pluginDescriptions, pluginSortMethod);
-    pluginDescriptionArray = {};
-    addToMenu (*tree, m, pluginDescriptions, pluginDescriptionArray);
 }
 
 std::optional<PluginDescription> HostWindow::getChosenType (const int menuID) const
@@ -373,11 +345,6 @@ std::optional<PluginDescription> HostWindow::getChosenType (const int menuID) co
 
     if (isPositiveAndBelow (internalIndex, pluginTypes.size()))
         return PluginDescription{ pluginTypes[(size_t) internalIndex] };
-
-    const auto externalIndex = menuID - menuIDBase;
-
-    if (isPositiveAndBelow (externalIndex, pluginDescriptionArray.size()))
-        return pluginDescriptionArray[externalIndex];
 
     return {};
 }
