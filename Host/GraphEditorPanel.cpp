@@ -1,10 +1,34 @@
+/*
+  ==============================================================================
 
+   This file is part of the JUCE library.
+   Copyright (c) 2022 - Raw Material Software Limited
+
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
+
+   By using JUCE, you agree to the terms of both the JUCE 7 End-User License
+   Agreement and JUCE Privacy Policy.
+
+   End User License Agreement: www.juce.com/juce-7-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
+
+   Or: You may also use this code under the terms of the GPL v3 (see
+   www.gnu.org/licenses).
+
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
+
+  ==============================================================================
+*/
 
 #include <JuceHeader.h>
 #include "GraphEditorPanel.h"
 #include "PluginInstanceFormat.h"
-#include "HostWindow.h"
+#include "MainHostWindow.h"
 
+//==============================================================================
 #if JUCE_IOS
  class AUScanner
  {
@@ -67,7 +91,7 @@
  };
 #endif
 
-
+//==============================================================================
 struct GraphEditorPanel::PinComponent final : public Component,
                                               public SettableTooltipClient
 {
@@ -145,7 +169,7 @@ struct GraphEditorPanel::PinComponent final : public Component,
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PinComponent)
 };
 
-
+//==============================================================================
 struct GraphEditorPanel::PluginComponent final : public Component,
                                                  public Timer,
                                                  private AudioProcessorParameter::Listener,
@@ -334,7 +358,7 @@ struct GraphEditorPanel::PluginComponent final : public Component,
             h = 100;
 
         setSize (w, h);
-        setName (processor.getName());
+        setName (processor.getName() + formatSuffix);
 
         {
             auto p = graph.getNodePosition (pluginID);
@@ -372,6 +396,14 @@ struct GraphEditorPanel::PluginComponent final : public Component,
         return {};
     }
 
+    bool isNodeUsingARA() const
+    {
+        if (auto node = graph.graph.getNodeForId (pluginID))
+            return node->properties["useARA"];
+
+        return false;
+    }
+
     void showPopupMenu()
     {
         menu.reset (new PopupMenu);
@@ -391,14 +423,26 @@ struct GraphEditorPanel::PluginComponent final : public Component,
 
         menu->addItem ("Show all programs", [this] { showWindow (PluginWindow::Type::programs); });
         menu->addItem ("Show all parameters", [this] { showWindow (PluginWindow::Type::generic); });
+        menu->addItem ("Show debug log", [this] { showWindow (PluginWindow::Type::debug); });
+
+       #if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
+        if (auto* instance = dynamic_cast<AudioPluginInstance*> (getProcessor()))
+            if (instance->getPluginDescription().hasARAExtension && isNodeUsingARA())
+                menu->addItem ("Show ARA host controls", [this] { showWindow (PluginWindow::Type::araHost); });
+       #endif
+
+        if (autoScaleOptionAvailable)
+            addPluginAutoScaleOptionsSubMenu (dynamic_cast<AudioPluginInstance*> (getProcessor()), *menu);
 
         menu->addSeparator();
         menu->addItem ("Configure Audio I/O", [this] { showWindow (PluginWindow::Type::audioIO); });
         menu->addItem ("Test state save/load", [this] { testStateSaveLoad(); });
 
+       #if ! JUCE_IOS && ! JUCE_ANDROID
         menu->addSeparator();
         menu->addItem ("Save plugin state", [this] { savePluginState(); });
         menu->addItem ("Load plugin state", [this] { loadPluginState(); });
+       #endif
 
         menu->showMenuAsync ({});
     }
@@ -505,10 +549,11 @@ struct GraphEditorPanel::PluginComponent final : public Component,
     DropShadowEffect shadow;
     std::unique_ptr<PopupMenu> menu;
     std::unique_ptr<FileChooser> fileChooser;
+    const String formatSuffix = getFormatSuffix (getProcessor());
 };
 
 
-
+//==============================================================================
 struct GraphEditorPanel::ConnectorComponent final : public Component,
                                                     public SettableTooltipClient
 {
@@ -704,7 +749,7 @@ struct GraphEditorPanel::ConnectorComponent final : public Component,
 };
 
 
-
+//==============================================================================
 GraphEditorPanel::GraphEditorPanel (PluginGraph& g)  : graph (g)
 {
     graph.addChangeListener (this);
@@ -751,7 +796,7 @@ void GraphEditorPanel::mouseDrag (const MouseEvent& e)
         stopTimer();
 }
 
-void GraphEditorPanel::createNewPlugin (const PluginDescription& desc, Point<int> position)
+void GraphEditorPanel::createNewPlugin (const PluginDescriptionAndPreference& desc, Point<int> position)
 {
     graph.addPlugin (desc, position.toDouble() / Point<double> ((double) getWidth(), (double) getHeight()));
 }
@@ -842,14 +887,14 @@ void GraphEditorPanel::showPopupMenu (Point<int> mousePos)
 {
     menu.reset (new PopupMenu);
 
-    if (auto* mainWindow = findParentComponentOfClass<HostWindow>())
+    if (auto* mainWindow = findParentComponentOfClass<MainHostWindow>())
     {
         mainWindow->addPluginsToMenu (*menu);
 
         menu->showMenuAsync ({},
                              ModalCallbackFunction::create ([this, mousePos] (int r)
                                                             {
-                                                                if (auto* mainWin = findParentComponentOfClass<HostWindow>())
+                                                                if (auto* mainWin = findParentComponentOfClass<MainHostWindow>())
                                                                     if (const auto chosen = mainWin->getChosenType (r))
                                                                         createNewPlugin (*chosen, mousePos);
                                                             }));
@@ -955,7 +1000,7 @@ void GraphEditorPanel::timerCallback()
     showPopupMenu (originalTouchPos);
 }
 
-
+//==============================================================================
 struct GraphDocumentComponent::TooltipBar final : public Component,
                                                   private Timer
 {
@@ -992,7 +1037,7 @@ struct GraphDocumentComponent::TooltipBar final : public Component,
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TooltipBar)
 };
 
-
+//==============================================================================
 class GraphDocumentComponent::TitleBarComponent final : public Component,
                                                         private Button::Listener
 {
@@ -1088,7 +1133,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TitleBarComponent)
 };
 
-
+//==============================================================================
 struct GraphDocumentComponent::PluginListBoxModel final : public ListBoxModel,
                                                           public ChangeListener,
                                                           public MouseListener
@@ -1156,7 +1201,7 @@ struct GraphDocumentComponent::PluginListBoxModel final : public ListBoxModel,
     JUCE_DECLARE_NON_COPYABLE (PluginListBoxModel)
 };
 
-
+//==============================================================================
 GraphDocumentComponent::GraphDocumentComponent (AudioPluginFormatManager& fm,
                                                 AudioDeviceManager& dm,
                                                 KnownPluginList& kpl)
@@ -1247,7 +1292,7 @@ void GraphDocumentComponent::resized()
     checkAvailableWidth();
 }
 
-void GraphDocumentComponent::createNewPlugin (const PluginDescription& desc, Point<int> pos)
+void GraphDocumentComponent::createNewPlugin (const PluginDescriptionAndPreference& desc, Point<int> pos)
 {
     graphPanel->createNewPlugin (desc, pos);
 }
@@ -1289,7 +1334,7 @@ void GraphDocumentComponent::itemDropped (const SourceDetails& details)
     // must be a valid index!
     jassert (isPositiveAndBelow (pluginTypeIndex, pluginList.getNumTypes()));
 
-    createNewPlugin (PluginDescription { pluginList.getTypes()[pluginTypeIndex] },
+    createNewPlugin (PluginDescriptionAndPreference { pluginList.getTypes()[pluginTypeIndex] },
                      details.localPosition);
 }
 

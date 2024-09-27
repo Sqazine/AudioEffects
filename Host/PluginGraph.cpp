@@ -1,11 +1,41 @@
+/*
+  ==============================================================================
 
+   This file is part of the JUCE library.
+   Copyright (c) 2022 - Raw Material Software Limited
+
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
+
+   By using JUCE, you agree to the terms of both the JUCE 7 End-User License
+   Agreement and JUCE Privacy Policy.
+
+   End User License Agreement: www.juce.com/juce-7-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
+
+   Or: You may also use this code under the terms of the GPL v3 (see
+   www.gnu.org/licenses).
+
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
+
+  ==============================================================================
+*/
 
 #include <JuceHeader.h>
-#include "HostWindow.h"
-#include "GraphEditorPanel.h"
+#include "MainHostWindow.h"
 #include "PluginGraph.h"
-#include "PluginInstanceProxy.h"
+#include "PluginInstanceFormat.h"
+#include "GraphEditorPanel.h"
 
+static std::unique_ptr<ScopedDPIAwarenessDisabler> makeDPIAwarenessDisablerForPlugin (const PluginDescription& desc)
+{
+    return shouldAutoScalePlugin (desc) ? std::make_unique<ScopedDPIAwarenessDisabler>()
+                                        : nullptr;
+}
+
+//==============================================================================
 PluginGraph::PluginGraph (AudioPluginFormatManager& fm, KnownPluginList& kpl)
     : FileBasedDocument (getFilenameSuffix(),
                          getFilenameWildcard(),
@@ -30,7 +60,7 @@ PluginGraph::NodeID PluginGraph::getNextUID() noexcept
     return PluginGraph::NodeID (++(lastUID.uid));
 }
 
-
+//==============================================================================
 void PluginGraph::changeListenerCallback (ChangeBroadcaster*)
 {
     changed();
@@ -50,20 +80,23 @@ AudioProcessorGraph::Node::Ptr PluginGraph::getNodeForName (const String& name) 
     return nullptr;
 }
 
-void PluginGraph::addPlugin (const PluginDescription& desc, Point<double> pos)
+void PluginGraph::addPlugin (const PluginDescriptionAndPreference& desc, Point<double> pos)
 {
-    formatManager.createPluginInstanceAsync (desc,
+    std::shared_ptr<ScopedDPIAwarenessDisabler> dpiDisabler = makeDPIAwarenessDisablerForPlugin (desc.pluginDescription);
+
+    formatManager.createPluginInstanceAsync (desc.pluginDescription,
                                              graph.getSampleRate(),
                                              graph.getBlockSize(),
-                                             [this, pos] (std::unique_ptr<AudioPluginInstance> instance, const String& error)
+                                             [this, pos, dpiDisabler, useARA = desc.useARA] (std::unique_ptr<AudioPluginInstance> instance, const String& error)
                                              {
-                                                 addPluginCallback (std::move (instance), error, pos);
+                                                 addPluginCallback (std::move (instance), error, pos, useARA);
                                              });
 }
 
 void PluginGraph::addPluginCallback (std::unique_ptr<AudioPluginInstance> instance,
                                      const String& error,
-                                     Point<double> pos)
+                                     Point<double> pos,
+                                     PluginDescriptionAndPreference::UseARA useARA)
 {
     if (instance == nullptr)
     {
@@ -74,12 +107,21 @@ void PluginGraph::addPluginCallback (std::unique_ptr<AudioPluginInstance> instan
     }
     else
     {
+       #if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
+        if (useARA == PluginDescriptionAndPreference::UseARA::yes
+            && instance->getPluginDescription().hasARAExtension)
+        {
+            instance = std::make_unique<ARAPluginInstanceWrapper> (std::move (instance));
+        }
+       #endif
+
         instance->enableAllBuses();
 
         if (auto node = graph.addNode (std::move (instance)))
         {
             node->properties.set ("x", pos.x);
             node->properties.set ("y", pos.y);
+            node->properties.set ("useARA", useARA == PluginDescriptionAndPreference::UseARA::yes);
             changed();
         }
     }
@@ -103,7 +145,7 @@ Point<double> PluginGraph::getNodePosition (NodeID nodeID) const
     return {};
 }
 
-
+//==============================================================================
 void PluginGraph::clear()
 {
     closeAnyOpenPluginWindows();
@@ -135,6 +177,7 @@ PluginWindow* PluginGraph::getOrCreateWindowFor (AudioProcessorGraph::Node* node
                 return nullptr;
             }
 
+            auto localDpiDisabler = makeDPIAwarenessDisablerForPlugin (description);
             return activePluginWindows.add (new PluginWindow (node, type, activePluginWindows));
         }
     }
@@ -149,7 +192,7 @@ bool PluginGraph::closeAnyOpenPluginWindows()
     return ! wasEmpty;
 }
 
-
+//==============================================================================
 String PluginGraph::getDocumentTitle()
 {
     if (! getFile().exists())
@@ -165,14 +208,14 @@ void PluginGraph::newDocument()
 
     graph.removeChangeListener (this);
 
-    PluginInstanceFormat format;
+    PluginInstanceFormat pluginFormat;
 
-    jassert (format.getAllTypes().size() > 3);
+    jassert (pluginFormat.getAllTypes().size() > 3);
 
-    addPlugin (format.getAllTypes()[0], { 0.5,  0.1 });
-    addPlugin (format.getAllTypes()[1], { 0.25, 0.1 });
-    addPlugin (format.getAllTypes()[2], { 0.5,  0.9 });
-    addPlugin (format.getAllTypes()[3], { 0.25, 0.9 });
+    addPlugin (PluginDescriptionAndPreference { pluginFormat.getAllTypes()[0] }, { 0.5,  0.1 });
+    addPlugin (PluginDescriptionAndPreference { pluginFormat.getAllTypes()[1] }, { 0.25, 0.1 });
+    addPlugin (PluginDescriptionAndPreference { pluginFormat.getAllTypes()[2] }, { 0.5,  0.9 });
+    addPlugin (PluginDescriptionAndPreference { pluginFormat.getAllTypes()[3] }, { 0.25, 0.9 });
 
     MessageManager::callAsync ([this]
     {
@@ -231,7 +274,7 @@ void PluginGraph::setLastDocumentOpened (const File& file)
         ->setValue ("recentFilterGraphFiles", recentFiles.toString());
 }
 
-
+//==============================================================================
 static void readBusLayoutFromXml (AudioProcessor::BusesLayout& busesLayout, AudioProcessor& plugin,
                                   const XmlElement& xml, bool isInput)
 {
@@ -272,7 +315,7 @@ static void readBusLayoutFromXml (AudioProcessor::BusesLayout& busesLayout, Audi
     }
 }
 
-
+//==============================================================================
 static XmlElement* createBusLayoutXml (const AudioProcessor::BusesLayout& layout, const bool isInput)
 {
     auto& buses = isInput ? layout.inputBuses
@@ -342,18 +385,40 @@ static XmlElement* createNodeXml (AudioProcessorGraph::Node* const node) noexcep
 
 void PluginGraph::createNodeFromXml (const XmlElement& xml)
 {
-    PluginDescription pd;
+    PluginDescriptionAndPreference pd;
+    const auto nodeUsesARA = xml.getBoolAttribute ("useARA");
+
+    for (auto* e : xml.getChildIterator())
+    {
+        if (pd.pluginDescription.loadFromXml (*e))
+        {
+            pd.useARA = nodeUsesARA ? PluginDescriptionAndPreference::UseARA::yes
+                                    : PluginDescriptionAndPreference::UseARA::no;
+            break;
+        }
+    }
 
     auto createInstanceWithFallback = [&]() -> std::unique_ptr<AudioPluginInstance>
     {
-        auto createInstance = [this] (const PluginDescription& description) -> std::unique_ptr<AudioPluginInstance>
+        auto createInstance = [this] (const PluginDescriptionAndPreference& description) -> std::unique_ptr<AudioPluginInstance>
         {
             String errorMessage;
 
-            auto instance = formatManager.createPluginInstance (description,
+            auto localDpiDisabler = makeDPIAwarenessDisablerForPlugin (description.pluginDescription);
+
+            auto instance = formatManager.createPluginInstance (description.pluginDescription,
                                                                 graph.getSampleRate(),
                                                                 graph.getBlockSize(),
                                                                 errorMessage);
+
+           #if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
+            if (instance
+                && description.useARA == PluginDescriptionAndPreference::UseARA::yes
+                && description.pluginDescription.hasARAExtension)
+            {
+                return std::make_unique<ARAPluginInstanceWrapper> (std::move (instance));
+            }
+           #endif
 
             return instance;
         };
@@ -363,19 +428,19 @@ void PluginGraph::createNodeFromXml (const XmlElement& xml)
 
         const auto allFormats = formatManager.getFormats();
         const auto matchingFormat = std::find_if (allFormats.begin(), allFormats.end(),
-                                                  [&] (const AudioPluginFormat* f) { return f->getName() == pd.pluginFormatName; });
+                                                  [&] (const AudioPluginFormat* f) { return f->getName() == pd.pluginDescription.pluginFormatName; });
 
         if (matchingFormat == allFormats.end())
             return nullptr;
 
         const auto plugins = knownPlugins.getTypesForFormat (**matchingFormat);
         const auto matchingPlugin = std::find_if (plugins.begin(), plugins.end(),
-                                                  [&] (const PluginDescription& desc) { return pd.uniqueId == desc.uniqueId; });
+                                                  [&] (const PluginDescription& desc) { return pd.pluginDescription.uniqueId == desc.uniqueId; });
 
         if (matchingPlugin == plugins.end())
             return nullptr;
 
-        return createInstance (*matchingPlugin);
+        return createInstance (PluginDescriptionAndPreference { *matchingPlugin });
     };
 
     if (auto instance = createInstanceWithFallback())

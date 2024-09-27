@@ -1,11 +1,36 @@
+/*
+  ==============================================================================
 
+   This file is part of the JUCE library.
+   Copyright (c) 2022 - Raw Material Software Limited
+
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
+
+   By using JUCE, you agree to the terms of both the JUCE 7 End-User License
+   Agreement and JUCE Privacy Policy.
+
+   End User License Agreement: www.juce.com/juce-7-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
+
+   Or: You may also use this code under the terms of the GPL v3 (see
+   www.gnu.org/licenses).
+
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
+
+  ==============================================================================
+*/
 
 #include <JuceHeader.h>
 #include "GraphEditorPanel.h"
 #include "PluginInstanceFormat.h"
-#include "HostWindow.h"
-#include "IOConfigWindow.h"
+#include "MainHostWindow.h"
+#include "IOConfigurationWindow.h"
 
+
+//==============================================================================
 struct NumberedBoxes final : public TableListBox,
                         private TableListBoxModel,
                         private Button::Listener
@@ -25,7 +50,7 @@ struct NumberedBoxes final : public TableListBox,
         minusButtonColumnId = 129
     };
 
-   
+    //==============================================================================
     NumberedBoxes (Listener& listenerToUse, bool canCurrentlyAddColumn, bool canCurrentlyRemoveColumn)
         : TableListBox ("NumberedBoxes", this),
           listener (listenerToUse),
@@ -71,11 +96,11 @@ struct NumberedBoxes final : public TableListBox,
     }
 
 private:
-   
+    //==============================================================================
     Listener& listener;
     bool canAddColumn, canRemoveColumn;
 
-   
+    //==============================================================================
     int getNumRows() override                                             { return 1; }
     void paintCell (Graphics&, int, int, int, int, bool) override         {}
     void paintRowBackground (Graphics& g, int, int, int, bool) override   { g.fillAll (Colours::grey); }
@@ -113,7 +138,7 @@ private:
         return textButton;
     }
 
-   
+    //==============================================================================
     String getButtonName (int columnId)
     {
         if (columnId == plusButtonColumnId)  return "+";
@@ -144,13 +169,13 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NumberedBoxes)
 };
 
-
-class IOConfigWindow::InputOutputConfig final : public Component,
+//==============================================================================
+class IOConfigurationWindow::InputOutputConfig final : public Component,
                                                        private Button::Listener,
                                                        private NumberedBoxes::Listener
 {
 public:
-    InputOutputConfig (IOConfigWindow& parent, bool direction)
+    InputOutputConfig (IOConfigurationWindow& parent, bool direction)
         : owner (parent),
           ioTitle ("ioLabel", direction ? "Input Configuration" : "Output Configuration"),
           ioBuses (*this, false, false),
@@ -272,7 +297,7 @@ private:
         }
     }
 
-   
+    //==============================================================================
     void applyBusLayout (const AudioChannelSet& set)
     {
         if (auto* p = owner.getAudioProcessor())
@@ -325,7 +350,7 @@ private:
         }
     }
 
-   
+    //==============================================================================
     void addColumn() override
     {
         if (auto* p = owner.getAudioProcessor())
@@ -386,8 +411,8 @@ private:
         }
     }
 
-   
-    IOConfigWindow& owner;
+    //==============================================================================
+    IOConfigurationWindow& owner;
     Label ioTitle, name;
     Label nameLabel { "nameLabel", "Bus Name:" };
     Label layoutLabel { "layoutLabel", "Channel Layout:" };
@@ -401,7 +426,7 @@ private:
 };
 
 
-IOConfigWindow::IOConfigWindow (AudioProcessor& p)
+IOConfigurationWindow::IOConfigurationWindow (AudioProcessor& p)
    : AudioProcessorEditor (&p),
      title ("title", p.getName())
 {
@@ -432,7 +457,7 @@ IOConfigWindow::IOConfigWindow (AudioProcessor& p)
     setSize (400, (inConfig != nullptr && outConfig != nullptr ? 160 : 0) + 200);
 }
 
-IOConfigWindow::~IOConfigWindow()
+IOConfigurationWindow::~IOConfigurationWindow()
 {
     if (auto* graph = getGraph())
     {
@@ -452,12 +477,12 @@ IOConfigWindow::~IOConfigWindow()
     }
 }
 
-void IOConfigWindow::paint (Graphics& g)
+void IOConfigurationWindow::paint (Graphics& g)
 {
      g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 }
 
-void IOConfigWindow::resized()
+void IOConfigurationWindow::resized()
 {
     auto r = getLocalBounds().reduced (10);
 
@@ -471,7 +496,7 @@ void IOConfigWindow::resized()
         outConfig->setBounds (r.removeFromTop (160));
 }
 
-void IOConfigWindow::update()
+void IOConfigurationWindow::update()
 {
     auto nodeID = getNodeID();
 
@@ -484,7 +509,7 @@ void IOConfigWindow::update()
             panel->updateComponents();
 }
 
-AudioProcessorGraph::NodeID IOConfigWindow::getNodeID() const
+AudioProcessorGraph::NodeID IOConfigurationWindow::getNodeID() const
 {
     if (auto* graph = getGraph())
         for (auto* node : graph->getNodes())
@@ -494,18 +519,18 @@ AudioProcessorGraph::NodeID IOConfigWindow::getNodeID() const
     return {};
 }
 
-HostWindow* IOConfigWindow::getMainWindow() const
+MainHostWindow* IOConfigurationWindow::getMainWindow() const
 {
     auto& desktop = Desktop::getInstance();
 
     for (int i = desktop.getNumComponents(); --i >= 0;)
-        if (auto* mainWindow = dynamic_cast<HostWindow*> (desktop.getComponent (i)))
+        if (auto* mainWindow = dynamic_cast<MainHostWindow*> (desktop.getComponent (i)))
             return mainWindow;
 
     return nullptr;
 }
 
-GraphDocumentComponent* IOConfigWindow::getGraphEditor() const
+GraphDocumentComponent* IOConfigurationWindow::getGraphEditor() const
 {
     if (auto* mainWindow = getMainWindow())
         return mainWindow->graphHolder.get();
@@ -513,7 +538,7 @@ GraphDocumentComponent* IOConfigWindow::getGraphEditor() const
     return nullptr;
 }
 
-AudioProcessorGraph* IOConfigWindow::getGraph() const
+AudioProcessorGraph* IOConfigurationWindow::getGraph() const
 {
     if (auto* graphEditor = getGraphEditor())
         if (auto* panel = graphEditor->graph.get())

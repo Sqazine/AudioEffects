@@ -1,9 +1,148 @@
+/*
+  ==============================================================================
+
+   This file is part of the JUCE library.
+   Copyright (c) 2022 - Raw Material Software Limited
+
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
+
+   By using JUCE, you agree to the terms of both the JUCE 7 End-User License
+   Agreement and JUCE Privacy Policy.
+
+   End User License Agreement: www.juce.com/juce-7-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
+
+   Or: You may also use this code under the terms of the GPL v3 (see
+   www.gnu.org/licenses).
+
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
+
+  ==============================================================================
+*/
+
 #pragma once
 
-#include "IOConfigWindow.h"
+#include "IOConfigurationWindow.h"
+#include "ARAPlugin.h"
+
+inline String getFormatSuffix (const AudioProcessor* plugin)
+{
+    const auto format = [plugin]()
+    {
+        if (auto* instance = dynamic_cast<const AudioPluginInstance*> (plugin))
+            return instance->getPluginDescription().pluginFormatName;
+
+        return String();
+    }();
+
+    return format.isNotEmpty() ? (" (" + format + ")") : format;
+}
 
 class PluginGraph;
 
+/**
+    A window that shows a log of parameter change messages sent by the plugin.
+*/
+class PluginDebugWindow final : public AudioProcessorEditor,
+                                public AudioProcessorParameter::Listener,
+                                public ListBoxModel,
+                                public AsyncUpdater
+{
+public:
+    PluginDebugWindow (AudioProcessor& proc)
+        : AudioProcessorEditor (proc), audioProc (proc)
+    {
+        setSize (500, 200);
+        addAndMakeVisible (list);
+
+        for (auto* p : audioProc.getParameters())
+            p->addListener (this);
+
+        log.add ("Parameter debug log started");
+    }
+
+    ~PluginDebugWindow() override
+    {
+        for (auto* p : audioProc.getParameters())
+            p->removeListener (this);
+    }
+
+    void parameterValueChanged (int parameterIndex, float newValue) override
+    {
+        auto* param = audioProc.getParameters()[parameterIndex];
+        auto value = param->getCurrentValueAsText().quoted() + " (" + String (newValue, 4) + ")";
+
+        appendToLog ("parameter change", *param, value);
+    }
+
+    void parameterGestureChanged (int parameterIndex, bool gestureIsStarting) override
+    {
+        auto* param = audioProc.getParameters()[parameterIndex];
+        appendToLog ("gesture", *param, gestureIsStarting ? "start" : "end");
+    }
+
+private:
+    void appendToLog (StringRef action, AudioProcessorParameter& param, StringRef value)
+    {
+        String entry (action + " " + param.getName (30).quoted() + " [" + String (param.getParameterIndex()) + "]: " + value);
+
+        {
+            ScopedLock lock (pendingLogLock);
+            pendingLogEntries.add (entry);
+        }
+
+        triggerAsyncUpdate();
+    }
+
+    void resized() override
+    {
+        list.setBounds (getLocalBounds());
+    }
+
+    int getNumRows() override
+    {
+        return log.size();
+    }
+
+    void paintListBoxItem (int rowNumber, Graphics& g, int width, int height, bool) override
+    {
+        g.setColour (getLookAndFeel().findColour (TextEditor::textColourId));
+
+        if (isPositiveAndBelow (rowNumber, log.size()))
+            g.drawText (log[rowNumber], Rectangle<int> { 0, 0, width, height }, Justification::left, true);
+    }
+
+    void handleAsyncUpdate() override
+    {
+        if (log.size() > logSizeTrimThreshold)
+            log.removeRange (0, log.size() - maxLogSize);
+
+        {
+            ScopedLock lock (pendingLogLock);
+            log.addArray (pendingLogEntries);
+            pendingLogEntries.clear();
+        }
+
+        list.updateContent();
+        list.scrollToEnsureRowIsOnscreen (log.size() - 1);
+    }
+
+    constexpr static const int maxLogSize = 300;
+    constexpr static const int logSizeTrimThreshold = 400;
+
+    ListBox list { "Log", this };
+
+    StringArray log;
+    StringArray pendingLogEntries;
+    CriticalSection pendingLogLock;
+
+    AudioProcessor& audioProc;
+};
+
+//==============================================================================
 /**
     A desktop window containing a plugin's GUI.
 */
@@ -16,11 +155,13 @@ public:
         generic,
         programs,
         audioIO,
+        debug,
+        araHost,
         numTypes
     };
 
     PluginWindow (AudioProcessorGraph::Node* n, Type t, OwnedArray<PluginWindow>& windowList)
-        : DocumentWindow (n->getProcessor()->getName(),
+        : DocumentWindow (n->getProcessor()->getName() + getFormatSuffix (n->getProcessor()),
                           LookAndFeel::getDefaultLookAndFeel().findColour (ResizableWindow::backgroundColourId),
                           DocumentWindow::minimiseButton | DocumentWindow::closeButton),
           activeWindowList (windowList),
@@ -140,6 +281,16 @@ private:
             type = PluginWindow::Type::generic;
         }
 
+        if (type == PluginWindow::Type::araHost)
+        {
+           #if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
+            if (auto* araPluginInstanceWrapper = dynamic_cast<ARAPluginInstanceWrapper*> (&processor))
+                if (auto* ui = araPluginInstanceWrapper->createARAHostEditor())
+                    return ui;
+           #endif
+            return {};
+        }
+
         if (type == PluginWindow::Type::generic)
         {
             auto* result = new GenericAudioProcessorEditor (processor);
@@ -151,7 +302,10 @@ private:
             return new ProgramAudioProcessorEditor (processor);
 
         if (type == PluginWindow::Type::audioIO)
-            return new IOConfigWindow (processor);
+            return new IOConfigurationWindow (processor);
+
+        if (type == PluginWindow::Type::debug)
+            return new PluginDebugWindow (processor);
 
         jassertfalse;
         return {};
@@ -165,12 +319,14 @@ private:
             case Type::generic:    return "Generic";
             case Type::programs:   return "Programs";
             case Type::audioIO:    return "IO";
+            case Type::debug:      return "Debug";
+            case Type::araHost:    return "ARAHost";
             case Type::numTypes:
             default:               return {};
         }
     }
 
-   
+    //==============================================================================
     struct ProgramAudioProcessorEditor final : public AudioProcessorEditor
     {
         explicit ProgramAudioProcessorEditor (AudioProcessor& p)
