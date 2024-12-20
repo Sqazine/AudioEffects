@@ -39,35 +39,6 @@ public:
     void setStateInformation(const void *data, int sizeInBytes) override;
 
 private:
-    enum WaveformIndex
-    {
-        SINE = 0,
-        TRIANGLE,
-        SWATOOTH,
-        INVERSE_SWATOOTH
-    };
-    enum InterpolationIndex
-    {
-        NEAREST_NEIGHBOUR = 0,
-        LINEAR,
-        CUBIC
-    };
-    const juce::StringArray mWaveformItemsUI =
-        {
-            "Sine",
-            "Triangle",
-            "Sawtooth(Rising)",
-            "Sawtooth(Falling)",
-        };
-
-    const juce::StringArray mInterpolationItemsUI =
-        {
-            "NearestNeighbour",
-            "Linear",
-            "Cubic",
-        };
-
-    float Lfo(float phase, int32_t waveform);
     float mLfoPhase;
     float mInverseSampleRate;
 
@@ -77,14 +48,14 @@ private:
     int32_t mDelayWritePosition;
 
     juce::AudioProcessorValueTreeState mApvts;
-    PluginParameterSlider mDelay;
-    PluginParameterSlider mWidth;
-    PluginParameterSlider mDepth;
-    PluginParameterComboBox mNumVoices;
-    PluginParameterSlider mFrequency;
-    PluginParameterComboBox mWaveform;
-    PluginParameterComboBox mInterpolation;
-    PluginParameterToggle mStereo;
+    PluginParameterSlider mParamDelay;
+    PluginParameterSlider mParamWidth;
+    PluginParameterSlider mParamDepth;
+    PluginParameterComboBox mParamNumVoices;
+    PluginParameterSlider mParamFrequency;
+    PluginParameterComboBox mParamWaveform;
+    PluginParameterComboBox mParamInterpolation;
+    PluginParameterToggle mParamStereo;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChorusAudioProcessor)
 };

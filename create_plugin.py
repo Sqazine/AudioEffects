@@ -1,8 +1,9 @@
 import sys
 import os
 
-template_name=""
-isSuccessfully=True
+template_name = ""
+isSuccessfully = True
+
 
 def cmake_file_content():
     return '''set(PLUGIN_NAME '''+template_name+''')
@@ -97,6 +98,7 @@ public:
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ('''+template_name+'''AudioProcessor)
 };'''
+
 
 def plugin_processor_cpp_file_content():
     return '''
@@ -282,6 +284,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 #endif
 '''
 
+
 def plugin_editor_hpp_file_content():
     return '''#pragma once
 
@@ -306,6 +309,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ('''+template_name+'''AudioProcessorEditor)
 };
 '''
+
 
 def plugin_editor_cpp_file_content():
     return '''#include "PluginProcessor.h"
@@ -340,68 +344,80 @@ void '''+template_name+'''AudioProcessorEditor::resized()
 }
 '''
 
+
 def create_folder():
     global isSuccessfully
     exists = os.path.exists(template_name)
     if not exists:
         os.makedirs(template_name)
-        print("\033[0;32m", "folder create successfully:",template_name,"\033[0m")
+        print("\033[0;32m", "folder create successfully:",
+              template_name, "\033[0m")
     else:
-        print("\033[0;31m", "error:already exists a folder named:",template_name,"\033[0m")
+        print("\033[0;31m", "error:already exists a folder named:",
+              template_name, "\033[0m")
         isSuccessfully = False
 
 
-def create_file(path,content_callback):
+def create_file(path, content_callback):
     global isSuccessfully
     exists = os.path.exists(path)
     if not exists:
-        file=open(path,"w")
+        file = open(path, "w")
         file.write(content_callback())
         file.close()
-        print("\033[0;32m", "file create successfully:",path,"\033[0m")
+        print("\033[0;32m", "file create successfully:", path, "\033[0m")
     else:
-        print("\033[0;31m", "error:already exists a file named:",path,"\033[0m")
+        print("\033[0;31m", "error:already exists a file named:",
+              path, "\033[0m")
         isSuccessfully = False
-        
+
+
 def create_cmake_file():
-    path=template_name+"/CMakeLists.txt"
-    create_file(path,cmake_file_content)
+    path = template_name+"/CMakeLists.txt"
+    create_file(path, cmake_file_content)
 
 
 def create_plugin_precessor_hpp_file():
-    path=template_name+"/PluginProcessor.h"
-    create_file(path,plugin_processor_hpp_file_content)
+    path = template_name+"/PluginProcessor.h"
+    create_file(path, plugin_processor_hpp_file_content)
+
 
 def create_plugin_precessor_cpp_file():
-    path=template_name+"/PluginProcessor.cpp"
-    create_file(path,plugin_processor_cpp_file_content)
+    path = template_name+"/PluginProcessor.cpp"
+    create_file(path, plugin_processor_cpp_file_content)
+
 
 def create_plugin_editor_hpp_file():
-    path=template_name+"/PluginEditor.h"
-    create_file(path,plugin_editor_hpp_file_content)
+    path = template_name+"/PluginEditor.h"
+    create_file(path, plugin_editor_hpp_file_content)
+
 
 def create_plugin_editor_cpp_file():
-    path=template_name+"/PluginEditor.cpp"
-    create_file(path,plugin_editor_cpp_file_content)
+    path = template_name+"/PluginEditor.cpp"
+    create_file(path, plugin_editor_cpp_file_content)
+
 
 def append_major_cmake_file():
     global isSuccessfully
     if isSuccessfully == True:
-        file=open("CMakeLists.txt","a")
+        file = open("CMakeLists.txt", "a")
         file.write("\nadd_subdirectory("+template_name+")")
         file.close()
+
 
 def append_plugin_instance_factory_file():
     global isSuccessfully
     if isSuccessfully == True:
-        file=open("Host/PluginInstanceFactoryCreation.inl","a")
-        file.write("\n[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<"+template_name+"AudioProcessor>()); },")
+        file = open("Host/PluginInstanceFactoryCreation.inl", "a")
+        file.write("\n[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<" +
+                   template_name+"AudioProcessor>()); },")
         file.close()
+
 
 def append_plugin_instance_header_file():
     global isSuccessfully
     if isSuccessfully == True:
-        file=open("Host/PluginInstanceIncludedHeader.inl","a")
+        file = open("Host/PluginInstanceIncludedHeader.inl", "a")
         file.write("\n#include \""+template_name+"/PluginProcessor.h\"")
         file.close()
 
@@ -409,7 +425,7 @@ def append_plugin_instance_header_file():
 def append_cmake_link_library_file():
     global isSuccessfully
     if isSuccessfully == True:
-        file=open("Host/CMakeLinkLibraries.cmake","r+",encoding="utf-8")
+        file = open("Host/CMakeLinkLibraries.cmake", "r+", encoding="utf-8")
 
         lines = file.readlines()
         lines.pop()
@@ -418,21 +434,23 @@ def append_cmake_link_library_file():
 
         file.seek(0)
         file.truncate()
-        
+
         file.writelines(lines)
         file.flush()
         file.close()
 
 
 def print_usage():
-    print("python3 create_template [template_name],such as:python3 create_template Delay")
+    print(
+        "python3 create_template [template_name],such as:python3 create_template Delay")
     exit(1)
 
+
 if __name__ == "__main__":
-    if len(sys.argv)<2:
+    if len(sys.argv) < 2:
         print_usage()
-    
-    template_name=sys.argv[1]
+
+    template_name = sys.argv[1]
 
     create_folder()
     create_cmake_file()
@@ -443,6 +461,5 @@ if __name__ == "__main__":
     append_major_cmake_file()
 
     append_plugin_instance_header_file()
-    append_plugin_instance_factory_file()    
+    append_plugin_instance_factory_file()
     append_cmake_link_library_file()
-

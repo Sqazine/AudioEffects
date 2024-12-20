@@ -1,7 +1,7 @@
 
 
 #include "PluginProcessor.h"
-
+#include "Common/Utils.h"
 
 FlangerAudioProcessor::FlangerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -21,8 +21,8 @@ FlangerAudioProcessor::FlangerAudioProcessor()
 	mFeedback(apvts, "Feedback", "", 0.0f, 1.0f, 1.0f),
 	mInverted(apvts, "Inverted mode", "", false, [](float value) {return value * (-2.0f) + 1.0f; }),
 	mFrequency(apvts, "LFO Frequency", "Hz", 0.05f, 2.0f, 0.2f),
-	mWaveForm(apvts, "LFO waveform", "", mWaveformItemsUI, WaveformIndex::SINE),
-	mInterpolation(apvts, "Interpolation", "", mInterpolationItemsUI, InterpolationIndex::LINEAR),
+	mWaveForm(apvts, "LFO waveform", "", mWaveformItemsUI, Waveform::SINE),
+	mInterpolation(apvts, "Interpolation", "", mInterpolationItemsUI, Interpolation::LINEAR),
 	mStereo(apvts, "Stereo", "")
 
 {
@@ -188,7 +188,7 @@ void FlangerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 			const float inData = channelData[sample];
 			float outData = 0.0f;
 
-			float localDelayTime = (curDelay + curWidth * Lfo(phase, mWaveForm.getTargetValue())) * getSampleRate();
+			float localDelayTime = (curDelay + curWidth * Lfo(phase, (Waveform)mWaveForm.getTargetValue())) * getSampleRate();
 
 			float readPosition = fmodf(localWritePosition - localDelayTime + mDelayBufferSamples, mDelayBufferSamples);
 
@@ -273,47 +273,6 @@ void FlangerAudioProcessor::setStateInformation(const void* data, int sizeInByte
 	// You should use this method to restore your parameters from this memory block,
 	// whose contents will have been created by the getStateInformation() call.
 }
-
-float FlangerAudioProcessor::Lfo(float phase, int32_t waveform)
-{
-	float outData = 0.0f;
-
-	switch (waveform)
-	{
-	case SINE:
-		outData = 0.5f + 0.5f * sinf(TWO_PI * phase);
-		break;
-	case TRIANGLE:
-	{
-		if (phase < 0.25f)
-			outData = 0.5f + 2.0f * phase;
-		else if (phase < 0.75f)
-			outData = 1.0f - 2.0f * (phase - 0.25f);
-		else
-			outData = 2.0f * (phase - 0.75f);
-		break;
-	}
-	case SWATOOTH:
-	{
-		if (phase < 0.5f)
-			outData = 0.5f + phase;
-		else
-			outData = phase - 0.5f;
-		break;
-	}
-	case INVERSE_SWATOOTH:
-	{
-		if (phase < 0.5f)
-			outData = 0.5f - phase;
-		else
-			outData = 1.5f - phase;
-		break;
-	}
-	}
-
-	return outData;
-}
-
 
 // This creates new instances of the plugin..
 #ifdef EXPORT_CREATE_FILTER_FUNCTION
