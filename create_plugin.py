@@ -63,7 +63,6 @@ def plugin_processor_hpp_file_content():
 class '''+template_name+'''AudioProcessor  : public juce::AudioProcessor
 {
 public:
-    
     '''+template_name+'''AudioProcessor();
     ~'''+template_name+'''AudioProcessor() override;
 
@@ -274,7 +273,6 @@ void '''+template_name+'''AudioProcessor::setStateInformation (const void* data,
     // whose contents will have been created by the getStateInformation() call.
 }
 
-
 // This creates new instances of the plugin..
 #ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
@@ -297,7 +295,6 @@ public:
     '''+template_name+'''AudioProcessorEditor ('''+template_name+'''AudioProcessor&);
     ~'''+template_name+'''AudioProcessorEditor() override;
 
-    
     void paint (juce::Graphics&) override;
     void resized() override;
 

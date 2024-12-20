@@ -16,6 +16,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/Bin/Release)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/Bin/RelWithDebInfo)
 
 add_subdirectory(Host)
+
+if(MSVC)
+    set_property (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Host)
+endif()
+
 add_subdirectory(AudioPlayer)
 add_subdirectory(ThreeBandEqualizer)
 add_subdirectory(Delay)
@@ -28,10 +33,4 @@ add_subdirectory(PingPongDelay)
 add_subdirectory(Reverb)
 add_subdirectory(SimpleDistortion)
 add_subdirectory(SimpleEQ)
-
 add_subdirectory(Chorus)
-
-
-if(MSVC)
-    set_property (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Host)
-endif()
