@@ -1,12 +1,13 @@
 import sys
 import os
+import shutil
 
-template_name = ""
+plugin_name = ""
 isSuccessfully = True
 
 
 def cmake_file_content():
-    return '''set(PLUGIN_NAME '''+template_name+''')
+    return '''set(PLUGIN_NAME '''+plugin_name+''')
 juce_add_plugin(${PLUGIN_NAME}
     # VERSION ...                               # Set this if the plugin version is different to the project version
     ICON_BIG  "${CMAKE_SOURCE_DIR}/JUCE/extras/AudioPluginHost/Source/JUCEAppIcon.png"
@@ -60,11 +61,11 @@ def plugin_processor_hpp_file_content():
     return '''#pragma once
 #include <JuceHeader.h>
 
-class '''+template_name+'''AudioProcessor  : public juce::AudioProcessor
+class '''+plugin_name+'''AudioProcessor  : public juce::AudioProcessor
 {
 public:
-    '''+template_name+'''AudioProcessor();
-    ~'''+template_name+'''AudioProcessor() override;
+    '''+plugin_name+'''AudioProcessor();
+    ~'''+plugin_name+'''AudioProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -95,7 +96,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ('''+template_name+'''AudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ('''+plugin_name+'''AudioProcessor)
 };'''
 
 
@@ -104,7 +105,7 @@ def plugin_processor_cpp_file_content():
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-'''+template_name+'''AudioProcessor::'''+template_name+'''AudioProcessor()
+'''+plugin_name+'''AudioProcessor::'''+plugin_name+'''AudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -118,16 +119,16 @@ def plugin_processor_cpp_file_content():
 {
 }
 
-'''+template_name+'''AudioProcessor::~'''+template_name+'''AudioProcessor()
+'''+plugin_name+'''AudioProcessor::~'''+plugin_name+'''AudioProcessor()
 {
 }
 
-const juce::String '''+template_name+'''AudioProcessor::getName() const
+const juce::String '''+plugin_name+'''AudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool '''+template_name+'''AudioProcessor::acceptsMidi() const
+bool '''+plugin_name+'''AudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -136,7 +137,7 @@ bool '''+template_name+'''AudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool '''+template_name+'''AudioProcessor::producesMidi() const
+bool '''+plugin_name+'''AudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -145,7 +146,7 @@ bool '''+template_name+'''AudioProcessor::producesMidi() const
    #endif
 }
 
-bool '''+template_name+'''AudioProcessor::isMidiEffect() const
+bool '''+plugin_name+'''AudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -154,49 +155,49 @@ bool '''+template_name+'''AudioProcessor::isMidiEffect() const
    #endif
 }
 
-double '''+template_name+'''AudioProcessor::getTailLengthSeconds() const
+double '''+plugin_name+'''AudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int '''+template_name+'''AudioProcessor::getNumPrograms()
+int '''+plugin_name+'''AudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int '''+template_name+'''AudioProcessor::getCurrentProgram()
+int '''+plugin_name+'''AudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void '''+template_name+'''AudioProcessor::setCurrentProgram (int index)
+void '''+plugin_name+'''AudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String '''+template_name+'''AudioProcessor::getProgramName (int index)
+const juce::String '''+plugin_name+'''AudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void '''+template_name+'''AudioProcessor::changeProgramName (int index, const juce::String& newName)
+void '''+plugin_name+'''AudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
 }
 
-void '''+template_name+'''AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void '''+plugin_name+'''AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
 
-void '''+template_name+'''AudioProcessor::releaseResources()
+void '''+plugin_name+'''AudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool '''+template_name+'''AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool '''+plugin_name+'''AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -221,7 +222,7 @@ bool '''+template_name+'''AudioProcessor::isBusesLayoutSupported (const BusesLay
 }
 #endif
 
-void '''+template_name+'''AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void '''+plugin_name+'''AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -250,24 +251,24 @@ void '''+template_name+'''AudioProcessor::processBlock (juce::AudioBuffer<float>
     }
 }
 
-bool '''+template_name+'''AudioProcessor::hasEditor() const
+bool '''+plugin_name+'''AudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* '''+template_name+'''AudioProcessor::createEditor()
+juce::AudioProcessorEditor* '''+plugin_name+'''AudioProcessor::createEditor()
 {
-    return new '''+template_name+'''AudioProcessorEditor (*this);
+    return new '''+plugin_name+'''AudioProcessorEditor (*this);
 }
 
-void '''+template_name+'''AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void '''+plugin_name+'''AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void '''+template_name+'''AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void '''+plugin_name+'''AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
@@ -277,7 +278,7 @@ void '''+template_name+'''AudioProcessor::setStateInformation (const void* data,
 #ifdef EXPORT_CREATE_FILTER_FUNCTION
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new '''+template_name+'''AudioProcessor();
+    return new '''+plugin_name+'''AudioProcessor();
 }
 #endif
 '''
@@ -289,11 +290,11 @@ def plugin_editor_hpp_file_content():
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-class '''+template_name+'''AudioProcessorEditor  : public juce::AudioProcessorEditor
+class '''+plugin_name+'''AudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    '''+template_name+'''AudioProcessorEditor ('''+template_name+'''AudioProcessor&);
-    ~'''+template_name+'''AudioProcessorEditor() override;
+    '''+plugin_name+'''AudioProcessorEditor ('''+plugin_name+'''AudioProcessor&);
+    ~'''+plugin_name+'''AudioProcessorEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -301,9 +302,9 @@ public:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    '''+template_name+'''AudioProcessor& audioProcessor;
+    '''+plugin_name+'''AudioProcessor& audioProcessor;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ('''+template_name+'''AudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ('''+plugin_name+'''AudioProcessorEditor)
 };
 '''
 
@@ -312,7 +313,7 @@ def plugin_editor_cpp_file_content():
     return '''#include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-'''+template_name+'''AudioProcessorEditor::'''+template_name+'''AudioProcessorEditor ('''+template_name+'''AudioProcessor& p)
+'''+plugin_name+'''AudioProcessorEditor::'''+plugin_name+'''AudioProcessorEditor ('''+plugin_name+'''AudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     // Make sure that before the constructor has finished, you've set the
@@ -320,11 +321,11 @@ def plugin_editor_cpp_file_content():
     setSize (400, 300);
 }
 
-'''+template_name+'''AudioProcessorEditor::~'''+template_name+'''AudioProcessorEditor()
+'''+plugin_name+'''AudioProcessorEditor::~'''+plugin_name+'''AudioProcessorEditor()
 {
 }
 
-void '''+template_name+'''AudioProcessorEditor::paint (juce::Graphics& g)
+void '''+plugin_name+'''AudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
@@ -334,7 +335,7 @@ void '''+template_name+'''AudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
 }
 
-void '''+template_name+'''AudioProcessorEditor::resized()
+void '''+plugin_name+'''AudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
@@ -344,14 +345,14 @@ void '''+template_name+'''AudioProcessorEditor::resized()
 
 def create_folder():
     global isSuccessfully
-    exists = os.path.exists(template_name)
+    exists = os.path.exists(plugin_name)
     if not exists:
-        os.makedirs(template_name)
+        os.makedirs(plugin_name)
         print("\033[0;32m", "folder create successfully:",
-              template_name, "\033[0m")
+              plugin_name, "\033[0m")
     else:
         print("\033[0;31m", "error:already exists a folder named:",
-              template_name, "\033[0m")
+              plugin_name, "\033[0m")
         isSuccessfully = False
 
 
@@ -370,27 +371,27 @@ def create_file(path, content_callback):
 
 
 def create_cmake_file():
-    path = template_name+"/CMakeLists.txt"
+    path = plugin_name+"/CMakeLists.txt"
     create_file(path, cmake_file_content)
 
 
 def create_plugin_precessor_hpp_file():
-    path = template_name+"/PluginProcessor.h"
+    path = plugin_name+"/PluginProcessor.h"
     create_file(path, plugin_processor_hpp_file_content)
 
 
 def create_plugin_precessor_cpp_file():
-    path = template_name+"/PluginProcessor.cpp"
+    path = plugin_name+"/PluginProcessor.cpp"
     create_file(path, plugin_processor_cpp_file_content)
 
 
 def create_plugin_editor_hpp_file():
-    path = template_name+"/PluginEditor.h"
+    path = plugin_name+"/PluginEditor.h"
     create_file(path, plugin_editor_hpp_file_content)
 
 
 def create_plugin_editor_cpp_file():
-    path = template_name+"/PluginEditor.cpp"
+    path = plugin_name+"/PluginEditor.cpp"
     create_file(path, plugin_editor_cpp_file_content)
 
 
@@ -398,7 +399,7 @@ def append_major_cmake_file():
     global isSuccessfully
     if isSuccessfully == True:
         file = open("CMakeLists.txt", "a")
-        file.write("\nadd_subdirectory("+template_name+")")
+        file.write("\nadd_subdirectory("+plugin_name+")")
         file.close()
 
 
@@ -407,7 +408,7 @@ def append_plugin_instance_factory_file():
     if isSuccessfully == True:
         file = open("Host/PluginInstanceFactoryCreation.inl", "a")
         file.write("\n[] { return std::make_unique<PluginInstanceProxy> (std::make_unique<" +
-                   template_name+"AudioProcessor>()); },")
+                   plugin_name+"AudioProcessor>()); },")
         file.close()
 
 
@@ -415,7 +416,7 @@ def append_plugin_instance_header_file():
     global isSuccessfully
     if isSuccessfully == True:
         file = open("Host/PluginInstanceIncludedHeader.inl", "a")
-        file.write("\n#include \""+template_name+"/PluginProcessor.h\"")
+        file.write("\n#include \""+plugin_name+"/PluginProcessor.h\"")
         file.close()
 
 
@@ -426,7 +427,7 @@ def append_cmake_link_library_file():
 
         lines = file.readlines()
         lines.pop()
-        lines.append("\t"+template_name+"\n")
+        lines.append("\t"+plugin_name+"\n")
         lines.append(")")
 
         file.seek(0)
@@ -437,18 +438,7 @@ def append_cmake_link_library_file():
         file.close()
 
 
-def print_usage():
-    print(
-        "python3 create_template [template_name],such as:python3 create_template Delay")
-    exit(1)
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print_usage()
-
-    template_name = sys.argv[1]
-
+def create_plugin():
     create_folder()
     create_cmake_file()
     create_plugin_precessor_hpp_file()
@@ -460,3 +450,70 @@ if __name__ == "__main__":
     append_plugin_instance_header_file()
     append_plugin_instance_factory_file()
     append_cmake_link_library_file()
+
+def erase_line(file_path, key_word):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    with open(file_path, 'w', encoding='utf-8') as file:
+        for line in lines:
+            if line.find(key_word) != -1:
+                pass
+            else:
+                file.write(line)
+    print("\033[0;32m", "line erase successfully:", file_path," of ",key_word, "\033[0m")
+
+
+def erase_major_cmake_file():
+    erase_line("CMakeLists.txt", plugin_name)
+
+
+def erase_plugin_instance_header_file():
+    erase_line("Host/PluginInstanceIncludedHeader.inl", plugin_name)
+
+
+def erase_plugin_instance_factory_file():
+    erase_line("Host/PluginInstanceFactoryCreation.inl", plugin_name)
+
+
+def erase_cmake_link_library_file():
+    erase_line("Host/CMakeLinkLibraries.cmake", plugin_name)
+
+
+def delete_folder():
+    files = os.listdir("./")
+    for file in files:
+        if os.path.isdir(os.path.join("./", file)):
+            if file.find(".git") != -1:
+                continue
+            if file.find(plugin_name) != -1:
+                shutil.rmtree(file)
+                return
+    print("\033[0;32m", "folder successfully:", plugin_name, "\033[0m")
+
+def delete_plugin():
+    erase_major_cmake_file()
+    erase_plugin_instance_header_file()
+    erase_plugin_instance_factory_file()
+    erase_cmake_link_library_file()
+
+    delete_folder()
+
+def print_usage():
+    print(
+        "python3 plugin_helper [option(-c,-d,--create,--delete)] [plugin_name],such as:python3 plugin_helper -c Delay")
+    exit(1)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print_usage()
+    
+    plugin_name = sys.argv[2]
+    
+    if sys.argv[1] == "-c" or sys.argv[1] == "--create":
+        create_plugin()
+    elif sys.argv[1] == "-d" or sys.argv[1] == "--delete":
+        delete_plugin()
+
+
+
